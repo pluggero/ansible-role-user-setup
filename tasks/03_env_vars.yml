@@ -1,0 +1,8 @@
+---
+- name: Manage env var file
+  ansible.builtin.include_tasks:
+    file: noauto_env_var_file.yml
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+  when: user.env_var_file is defined

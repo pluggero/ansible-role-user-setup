@@ -1,0 +1,15 @@
+---
+- name: Check if env var file exists
+  ansible.builtin.stat:
+    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.env_var_file }}"
+  register: user_setup_env_var_file
+
+- name: Ensure env var file exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.env_var_file }}"
+    state: touch
+    mode: "600"
+    owner: "{{ user.name }}"
+    group: "{{ user.name }}"
+  become: true
+  when: not user_setup_env_var_file.stat.exists

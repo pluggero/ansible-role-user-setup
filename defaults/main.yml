@@ -1,0 +1,32 @@
+---
+user_setup_groups: []
+# - name: test
+#   system: false
+
+user_setup_users:
+  - name: "{{ ansible_user }}"
+    shell: "/bin/bash"
+    groups: []
+    groups_append: true
+    password: "{{ user_setup_example_password | password_hash('sha512', user_setup_example_password_salt) }}"
+    env_var_file: ".env_vars"
+    user_directories:
+      - name: ".local/share/archive"
+        env_var: "XDG_ARCHIVE_DIR"
+      - name: ".cache"
+        env_var: "XDG_CACHE_HOME"
+      - name: ".config"
+        env_var: "XDG_CONFIG_HOME"
+      - name: "documents"
+        env_var: "XDG_DOCUMENTS_DIR"
+      - name: "downloads"
+        env_var: "XDG_DOWNLOADS_DIR"
+      - name: "pictures"
+        env_var: "XDG_PICTURES_DIR"
+      - name: "tools"
+        env_var: "XDG_TOOLS_DIR"
+      - name: "videos"
+        env_var: "XDG_VIDEOS_DIR"
+    ssh_setup: true
+    ssh_directory: ".ssh"
+    ssh_public_keys: []

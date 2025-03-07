@@ -1,0 +1,36 @@
+---
+- name: Ensure ssh directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}"
+    state: directory
+    mode: "700"
+    owner: "{{ user.name }}"
+    group: "{{ user.name }}"
+  become: true
+
+- name: Check if authorized_keys file exists
+  ansible.builtin.stat:
+    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
+  register: user_setup_authorized_keys
+
+- name: Ensure authorized_keys file exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
+    state: touch
+    mode: "600"
+    owner: "{{ user.name }}"
+    group: "{{ user.name }}"
+  become: true
+  when:
+    - user.ssh_public_keys is defined and ( user.ssh_public_keys | length > 0 )
+    - not user_setup_authorized_keys.stat.exists
+
+- name: Ensure authorized_keys file is populated
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
+    line: "{{ key }}"
+  become: true
+  loop: "{{ user.ssh_public_keys }}"
+  loop_control:
+    loop_var: key
+  when: user.ssh_public_keys is defined and ( user.ssh_public_keys | length > 0 )

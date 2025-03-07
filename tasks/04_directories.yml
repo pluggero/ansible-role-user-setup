@@ -1,0 +1,8 @@
+---
+- name: Manage user directories
+  ansible.builtin.include_tasks:
+    file: noauto_user_directories.yml
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+  when: user.user_directories is defined

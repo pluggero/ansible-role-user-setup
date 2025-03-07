@@ -1,0 +1,8 @@
+---
+- name: Manage ssh setup
+  ansible.builtin.include_tasks:
+    file: noauto_ssh_setup.yml
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+  when: user.ssh_setup
