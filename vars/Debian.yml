@@ -1,0 +1,3 @@
+---
+user_setup_dep_pkgs:
+  - xdg-utils
