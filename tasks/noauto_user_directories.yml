@@ -13,10 +13,26 @@
       loop_control:
         loop_var: folder
 
-    - name: Ensure env vars are set for user directories
+    - name: Check if xdg user-dirs file exists
+      ansible.builtin.stat:
+        path: "{{ ansible_facts.getent_passwd[user.name][4] }}/.config/user-dirs.dirs"
+      register: user_setup_xdg_file
+
+    - name: Ensure xdg user-dirs file exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts.getent_passwd[user.name][4] }}/.config/user-dirs.dirs"
+        state: touch
+        mode: "600"
+        owner: "{{ user.name }}"
+        group: "{{ user.name }}"
+      become: true
+      when: not user_setup_xdg_file.stat.exists
+
+    - name: Ensure xdg user-dirs file is populated
       ansible.builtin.lineinfile:
-        path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.env_var_file }}"
-        line: 'export {{ folder.env_var }}="{{ ansible_facts.getent_passwd[user.name][4] }}/{{ folder.name }}"'
+        path: "{{ ansible_facts.getent_passwd[user.name][4] }}/.config/user-dirs.dirs"
+        regexp: "^{{ folder.env_var }}="
+        line: '{{ folder.env_var }}="{{ ansible_facts.getent_passwd[user.name][4] }}/{{ folder.name }}"'
       become: true
       loop: "{{ user.user_directories }}"
       loop_control:
