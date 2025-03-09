@@ -1,0 +1,12 @@
+---
+- name: Assert that required information for user creation are available
+  ansible.builtin.assert:
+    that:
+      - user.name is defined and user.name != ''
+    fail_msg: >-
+      The username for user creation is a required argument and should not be empty.
+    success_msg: "All required arguments available for user creation."
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+  when: user_setup_users is defined and user_setup_users | length > 0

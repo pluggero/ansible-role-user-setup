@@ -5,4 +5,4 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  when: user.ssh_setup
+  when: user.ssh_setup | default(false)

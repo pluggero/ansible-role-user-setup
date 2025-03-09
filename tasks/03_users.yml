@@ -11,6 +11,10 @@
       loop: "{{ user_setup_users }}"
       loop_control:
         loop_var: user
+      when:
+        - user.shell is defined
+        - user.groups is defined
+        - user.groups_append is defined
 
     - name: Set user password
       ansible.builtin.user:
@@ -20,6 +24,7 @@
       loop: "{{ user_setup_users }}"
       loop_control:
         loop_var: user
+      when: user.password is defined
 
 - name: Fetch user and group information
   ansible.builtin.getent:

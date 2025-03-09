@@ -1,6 +1,9 @@
 ---
 - name: Install Dependencies
   block:
+    - name: Validate user_setup variables
+      ansible.builtin.include_tasks: noauto_validate_vars.yml
+
     - name: Include OS-specific variables
       ansible.builtin.include_vars: "{{ var_file }}"
       with_first_found:

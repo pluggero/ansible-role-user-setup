@@ -5,4 +5,4 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  when: user.env_var_file is defined
+  when: user.env_var_setup | default(false)
