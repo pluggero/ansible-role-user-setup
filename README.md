@@ -1,6 +1,6 @@
 # Ansible Role: User Setup
 
-[![CI](https://github.com/pluggero/ansible-role-user_setup/actions/workflows/ci.yml/badge.svg)](https://github.com/pluggero/ansible-role-user_setup/actions/workflows/ci.yml) [![Ansible Galaxy downloads](https://img.shields.io/ansible/role/d/pluggero/user_setup?label=Galaxy%20downloads&logo=ansible&color=%23096598)](https://galaxy.ansible.com/ui/standalone/roles/pluggero/user_setup)
+[![CI](https://github.com/pluggero/ansible-role-user-setup/actions/workflows/ci.yml/badge.svg)](https://github.com/pluggero/ansible-role-user-setup/actions/workflows/ci.yml) [![Ansible Galaxy downloads](https://img.shields.io/ansible/role/d/pluggero/user_setup?label=Galaxy%20downloads&logo=ansible&color=%23096598)](https://galaxy.ansible.com/ui/standalone/roles/pluggero/user_setup)
 
 An Ansible Role that performs a basic user setup on differnet Linux distributions.
 
