@@ -1,30 +1,18 @@
 ---
 - name: Manage users
-  block:
-    - name: Create users
-      ansible.builtin.user:
-        name: "{{ user.name }}"
-        shell: "{{ user.shell }}"
-        groups: "{{ user.groups }}"
-        append: "{{ user.groups_append }}"
-      become: true
-      loop: "{{ user_setup_users }}"
-      loop_control:
-        loop_var: user
-      when:
-        - user.shell is defined
-        - user.groups is defined
-        - user.groups_append is defined
-
-    - name: Set user password
-      ansible.builtin.user:
-        name: "{{ user.name }}"
-        password: "{{ user.password }}"
-      become: true
-      loop: "{{ user_setup_users }}"
-      loop_control:
-        loop_var: user
-      when: user.password is defined
+  ansible.builtin.user:
+    name: "{{ user.name }}"
+    shell: "{{ user.shell }}"
+    groups: "{{ user.groups }}"
+    append: "{{ user.groups_append }}"
+  become: true
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+  when:
+    - user.shell is defined
+    - user.groups is defined
+    - user.groups_append is defined
 
 - name: Fetch user and group information
   ansible.builtin.getent:
