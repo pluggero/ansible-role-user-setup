@@ -1,0 +1,5 @@
+{
+  "extends": ["config:best-practices", ":disableRateLimiting"],
+  "enabledManagers": ["github-actions", "pip_requirements"],
+  "assignees": ["pluggero"]
+}
