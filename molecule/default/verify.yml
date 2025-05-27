@@ -1,0 +1,96 @@
+---
+- name: Verify user_setup role was applied correctly
+  hosts: all
+  gather_facts: false
+
+  vars_files:
+    - ../../vars/molecule.yml
+
+  vars:
+    user_name: "{{ user_setup_users[0].name }}"
+    user_home: "/home/{{ user_name }}"
+    user_shell: "{{ user_setup_users[0].shell }}"
+    user_group: "{{ user_setup_users[0].groups[0] }}"
+    ssh_key: "{{ user_setup_users[0].ssh_public_keys[0] }}"
+    env_file: "{{ user_setup_users[0].env_var_file }}"
+    expected_directories: "{{ user_setup_users[0].user_directories | map(attribute='name') | list }}"
+    expected_env_vars: "{{ user_setup_users[0].user_directories | map(attribute='env_var') | list }}"
+
+  tasks:
+    - name: Verify user exists
+      block:
+        - name: Get passwd
+          ansible.builtin.getent:
+            database: passwd
+            key: "{{ user_name }}"
+          register: passwd_entry
+
+        - name: Assert user was created
+          ansible.builtin.assert:
+            that:
+              - user_name in passwd_entry.ansible_facts.getent_passwd
+
+        - name: Assert user has correct shell
+          ansible.builtin.assert:
+            that:
+              - passwd_entry.ansible_facts.getent_passwd[user_name][5] == user_shell
+
+    - name: Verify group exists
+      block:
+        - name: Get groups
+          ansible.builtin.getent:
+            database: group
+            key: "{{ user_group }}"
+          register: group_entry
+
+        - name: Assert group exists and user is a member
+          ansible.builtin.assert:
+            that:
+              - user_group in group_entry.ansible_facts.getent_group
+              - user_name in group_entry.ansible_facts.getent_group[user_group][2].split(',')
+
+    - name: Check user directories exist
+      ansible.builtin.stat:
+        path: "{{ user_home }}/{{ item }}"
+      loop: "{{ expected_directories }}"
+      register: dir_checks
+
+    - name: Assert all expected directories exist
+      ansible.builtin.assert:
+        that: "{{ dir_checks.results | map(attribute='stat.exists') | list | min }}"
+
+    - name: Check env file exists
+      ansible.builtin.stat:
+        path: "{{ user_home }}/{{ env_file }}"
+      register: env_file_stat
+
+    - name: Assert env file exists
+      ansible.builtin.assert:
+        that: env_file_stat.stat.exists
+
+    - name: Check SSH authorized_keys file exists
+      ansible.builtin.stat:
+        path: "{{ user_home }}/{{ user_setup_users[0].ssh_directory }}/authorized_keys"
+      register: ssh_stat
+
+    - name: Assert SSH authorized_keys exists
+      ansible.builtin.assert:
+        that: ssh_stat.stat.exists
+
+    - name: Read authorized_keys content
+      ansible.builtin.slurp:
+        path: "{{ user_home }}/{{ user_setup_users[0].ssh_directory }}/authorized_keys"
+      register: ssh_keys
+
+    - name: Assert expected SSH key is present
+      ansible.builtin.assert:
+        that: ssh_key in (ssh_keys.content | b64decode)
+
+    - name: Read /etc/shadow entry
+      ansible.builtin.command: grep "^{{ user_name }}:" /etc/shadow
+      register: shadow_entry
+      changed_when: false
+
+    - name: Assert password is hashed with sha512
+      ansible.builtin.assert:
+        that: shadow_entry.stdout is search("^{{ user_name }}:\\$6\\$")
