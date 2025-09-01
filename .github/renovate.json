@@ -1,5 +1,18 @@
 {
   "extends": ["config:best-practices", ":disableRateLimiting"],
+  "automerge": false,
+  "automergeType": "pr",
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions", "pip_requirements"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "matchManagers": ["ansible-galaxy"],
+      "automerge": false
+    }
+  ],
   "enabledManagers": ["github-actions", "pip_requirements"],
   "assignees": ["pluggero"]
 }
