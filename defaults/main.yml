@@ -10,6 +10,8 @@ user_setup_users: []
 #   groups: []
 #   groups_append: true
 #   password: "{{ user_setup_example_password | password_hash('sha512', user_setup_example_password_salt) }}"
+#   sudo_access: true
+#   sudo_nopasswd: false
 #   env_var_setup: true
 #   env_var_file: ".env_vars"
 #   user_directories:

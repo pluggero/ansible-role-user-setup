@@ -110,3 +110,31 @@
     - name: Assert password is hashed with sha512
       ansible.builtin.assert:
         that: shadow_entry.stdout is search("^{{ user_name }}:\\$6\\$")
+
+    - name: Verify sudo access
+      block:
+        - name: Check sudoers file exists
+          ansible.builtin.stat:
+            path: "/etc/sudoers.d/{{ user_name }}"
+          register: sudoers_file
+
+        - name: Assert sudoers file exists
+          ansible.builtin.assert:
+            that: sudoers_file.stat.exists
+
+        - name: Assert sudoers file has correct permissions
+          ansible.builtin.assert:
+            that:
+              - sudoers_file.stat.mode == '0440'
+              - sudoers_file.stat.pw_name == 'root'
+              - sudoers_file.stat.gr_name == 'root'
+
+        - name: Read sudoers file content
+          ansible.builtin.slurp:
+            path: "/etc/sudoers.d/{{ user_name }}"
+          register: sudoers_content
+
+        - name: Assert sudoers file contains NOPASSWD
+          ansible.builtin.assert:
+            that:
+              - (sudoers_content.content | b64decode) is search('{{ user_name }} ALL=\\(ALL\\) NOPASSWD:ALL')

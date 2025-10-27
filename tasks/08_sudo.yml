@@ -1,0 +1,8 @@
+---
+- name: Manage sudo access
+  ansible.builtin.include_tasks:
+    file: noauto_sudo_setup.yml
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+  when: user.sudo_access is defined and user.sudo_access
