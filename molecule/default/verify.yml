@@ -8,6 +8,7 @@
 
   vars:
     user_name: "{{ user_setup_users[0].name }}"
+    user_uid: "{{ user_setup_users[0].uid }}"
     user_home: "/home/{{ user_name }}"
     user_shell: "{{ user_setup_users[0].shell }}"
     user_group: "{{ user_setup_users[0].groups[0] }}"
@@ -34,6 +35,11 @@
           ansible.builtin.assert:
             that:
               - passwd_entry.ansible_facts.getent_passwd[user_name][5] == user_shell
+
+        - name: Assert user has correct UID
+          ansible.builtin.assert:
+            that:
+              - passwd_entry.ansible_facts.getent_passwd[user_name][1] | int == user_uid | int
 
     - name: Verify group exists
       block:
