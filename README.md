@@ -49,9 +49,11 @@ user_setup_users:
         env_var: "XDG_TOOLS_DIR"
       - name: "videos"
         env_var: "XDG_VIDEOS_DIR"
-    ssh_setup: true
     ssh_directory: ".ssh"
-    ssh_public_keys: []
+    ssh_authorized_keys:
+      - key: "ssh-ed25519 AAAA... user@laptop"
+        options: 'from="192.168.1.0/24",no-agent-forwarding'
+      - key: "ssh-rsa AAAA... user@backup"
 ```
 
 The users to create can be defined in the variable `user_setup_users`.

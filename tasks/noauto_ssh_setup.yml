@@ -21,16 +21,13 @@
     owner: "{{ user.name }}"
     group: "{{ user.name }}"
   become: true
-  when:
-    - user.ssh_public_keys is defined and ( user.ssh_public_keys | length > 0 )
-    - not user_setup_authorized_keys.stat.exists
+  when: not user_setup_authorized_keys.stat.exists
 
 - name: Ensure authorized_keys file is populated
   ansible.builtin.lineinfile:
     path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
-    line: "{{ key }}"
+    line: "{{ (key_entry.options | default('') ~ ' ' if key_entry.options is defined else '') ~ key_entry.key }}"
   become: true
-  loop: "{{ user.ssh_public_keys }}"
+  loop: "{{ user.ssh_authorized_keys }}"
   loop_control:
-    loop_var: key
-  when: user.ssh_public_keys is defined and ( user.ssh_public_keys | length > 0 )
+    loop_var: key_entry

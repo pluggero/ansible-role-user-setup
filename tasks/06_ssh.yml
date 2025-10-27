@@ -5,4 +5,4 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  when: user.ssh_setup | default(false)
+  when: user.ssh_authorized_keys is defined and (user.ssh_authorized_keys | length > 0)
