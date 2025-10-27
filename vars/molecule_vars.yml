@@ -34,7 +34,8 @@ user_setup_users:
         env_var: "XDG_TOOLS_DIR"
       - name: "videos"
         env_var: "XDG_VIDEOS_DIR"
-    ssh_setup: true
     ssh_directory: ".ssh"
-    ssh_public_keys:
-      - "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBL3+59egObwwPuBKo1caTnovj6ZliOumpwMcpdL3NV7 user@hostname"
+    ssh_authorized_keys:
+      - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBL3+59egObwwPuBKo1caTnovj6ZliOumpwMcpdL3NV7 user@hostname"
+        options: 'from="192.168.1.0/24",no-agent-forwarding'
+      - key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7z8+NKavSZDvD8w5xOPKJWYYo9K3vX2LmPl1qJxL8 user@backup"

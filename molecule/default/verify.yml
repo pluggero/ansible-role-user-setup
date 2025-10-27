@@ -4,14 +4,14 @@
   gather_facts: false
 
   vars_files:
-    - ../../vars/molecule.yml
+    - ../../vars/molecule_vars.yml
 
   vars:
     user_name: "{{ user_setup_users[0].name }}"
     user_home: "/home/{{ user_name }}"
     user_shell: "{{ user_setup_users[0].shell }}"
     user_group: "{{ user_setup_users[0].groups[0] }}"
-    ssh_key: "{{ user_setup_users[0].ssh_public_keys[0] }}"
+    ssh_key: "{{ user_setup_users[0].ssh_authorized_keys[0].key }}"
     env_file: "{{ user_setup_users[0].env_var_file }}"
     expected_directories: "{{ user_setup_users[0].user_directories | map(attribute='name') | list }}"
     expected_env_vars: "{{ user_setup_users[0].user_directories | map(attribute='env_var') | list }}"
@@ -85,6 +85,16 @@
     - name: Assert expected SSH key is present
       ansible.builtin.assert:
         that: ssh_key in (ssh_keys.content | b64decode)
+
+    - name: Assert SSH key with options is formatted correctly
+      ansible.builtin.assert:
+        that:
+          - (ssh_keys.content | b64decode) is search('from="192.168.1.0/24",no-agent-forwarding ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBL3\\+59egObwwPuBKo1caTnovj6ZliOumpwMcpdL3NV7 user@hostname')
+
+    - name: Assert SSH key without options is present
+      ansible.builtin.assert:
+        that:
+          - (ssh_keys.content | b64decode) is search('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7z8\\+NKavSZDvD8w5xOPKJWYYo9K3vX2LmPl1qJxL8 user@backup')
 
     - name: Read /etc/shadow entry
       ansible.builtin.command: grep "^{{ user_name }}:" /etc/shadow

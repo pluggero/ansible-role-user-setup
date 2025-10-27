@@ -3,7 +3,7 @@
   hosts: all
 
   vars_files:
-    - ../../vars/molecule.yml
+    - ../../vars/molecule_vars.yml
 
   vars:
     ansible_user: root
