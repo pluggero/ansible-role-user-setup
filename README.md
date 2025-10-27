@@ -29,7 +29,6 @@ user_setup_users:
     password: "{{ user_setup_example_password | password_hash('sha512', user_setup_example_password_salt) }}"
     env_var_setup: true
     env_var_file: ".env_vars"
-    user_directory_setup: true
     user_directories:
       - name: ".local/share/archive"
         env_var: "XDG_ARCHIVE_DIR"
