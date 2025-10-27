@@ -2,6 +2,7 @@
 - name: Manage users
   ansible.builtin.user:
     name: "{{ user.name }}"
+    uid: "{{ user.uid | default(omit) }}"
     shell: "{{ user.shell }}"
     groups: "{{ user.groups }}"
     append: "{{ user.groups_append }}"

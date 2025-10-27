@@ -7,6 +7,7 @@ user_setup_groups:
     system: false
 user_setup_users:
   - name: "{{ user_setup_user }}"
+    uid: 1500
     shell: "/bin/bash"
     groups:
       - test

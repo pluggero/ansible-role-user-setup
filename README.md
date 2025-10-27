@@ -23,6 +23,7 @@ The groups to create can be defined in the variable `user_setup_groups`.
 ```yaml
 user_setup_users:
   - name: "{{ ansible_user }}"
+    uid: 1500
     shell: "/bin/bash"
     groups: []
     groups_append: true
