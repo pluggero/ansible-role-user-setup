@@ -9,10 +9,30 @@
       "automergeType": "pr"
     },
     {
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["python/cpython"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
       "matchManagers": ["ansible-galaxy"],
       "automerge": false
     }
   ],
   "enabledManagers": ["github-actions", "pip_requirements"],
-  "assignees": ["pluggero"]
+  "assignees": ["pluggero"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "\\.github/workflows/.+\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "python-version:\\s+[\"'](?<currentValue>\\d+\\.\\d+)[\"']"
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "python/cpython",
+      "versioningTemplate": "semver"
+    }
+  ]
 }
