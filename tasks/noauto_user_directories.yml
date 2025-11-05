@@ -17,6 +17,7 @@
       ansible.builtin.stat:
         path: "{{ ansible_facts.getent_passwd[user.name][4] }}/.config/user-dirs.dirs"
       register: user_setup_xdg_file
+      become: true
 
     - name: Ensure xdg user-dirs file exists
       ansible.builtin.file:
