@@ -5,7 +5,6 @@
   when: ansible_pkg_mgr != "pacman"
 
 - name: Install user_setup dependencies via pacman
-  when: ansible_pkg_mgr == "pacman"
   block:
     - name: Update pacman cache
       community.general.pacman:
@@ -14,6 +13,9 @@
 
     - name: Ensure user_setup dependencies are installed
       community.general.pacman:
-        name: "{{ user_setup_dep_pkgs }}"
+        name: "{{ package }}"
         state: present
+      loop: "{{ user_setup_dep_pkgs }}"
+      loop_control:
+        loop_var: package
       become: true

@@ -7,134 +7,192 @@
     - ../../vars/molecule_vars.yml
 
   vars:
-    user_name: "{{ user_setup_users[0].name }}"
-    user_uid: "{{ user_setup_users[0].uid }}"
-    user_home: "/home/{{ user_name }}"
-    user_shell: "{{ user_setup_users[0].shell }}"
-    user_group: "{{ user_setup_users[0].groups[0] }}"
-    ssh_key: "{{ user_setup_users[0].ssh_authorized_keys[0].key }}"
-    env_file: "{{ user_setup_users[0].env_var_file }}"
-    expected_directories: "{{ user_setup_users[0].user_directories | map(attribute='name') | list }}"
-    expected_env_vars: "{{ user_setup_users[0].user_directories | map(attribute='env_var') | list }}"
+    ansible_user: ansible
+    ansible_become_password: ansible
 
   tasks:
-    - name: Verify user exists
-      block:
-        - name: Get passwd
-          ansible.builtin.getent:
-            database: passwd
-            key: "{{ user_name }}"
-          register: passwd_entry
+    - name: Get passwd for user
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ item.name }}"
+      register: passwd_entry
+      loop: "{{ user_setup_users }}"
 
-        - name: Assert user was created
-          ansible.builtin.assert:
-            that:
-              - user_name in passwd_entry.ansible_facts.getent_passwd
+    - name: Assert user was created
+      ansible.builtin.assert:
+        that:
+          - item.item.name in item.ansible_facts.getent_passwd
+        fail_msg: "User {{ item.item.name }} was not created"
+      loop: "{{ passwd_entry.results }}"
 
-        - name: Assert user has correct shell
-          ansible.builtin.assert:
-            that:
-              - passwd_entry.ansible_facts.getent_passwd[user_name][5] == user_shell
+    - name: Assert user has correct shell
+      ansible.builtin.assert:
+        that:
+          - item.ansible_facts.getent_passwd[item.item.name][5] == item.item.shell
+        fail_msg: "User {{ item.item.name }} does not have correct shell"
+      loop: "{{ passwd_entry.results }}"
 
-        - name: Assert user has correct UID
-          ansible.builtin.assert:
-            that:
-              - passwd_entry.ansible_facts.getent_passwd[user_name][1] | int == user_uid | int
+    - name: Assert user has correct UID
+      ansible.builtin.assert:
+        that:
+          - item.ansible_facts.getent_passwd[item.item.name][1] | int == item.item.uid | int
+        fail_msg: "User {{ item.item.name }} does not have correct UID"
+      loop: "{{ passwd_entry.results }}"
 
-    - name: Verify group exists
-      block:
-        - name: Get groups
-          ansible.builtin.getent:
-            database: group
-            key: "{{ user_group }}"
-          register: group_entry
+    - name: Get group for each user
+      ansible.builtin.getent:
+        database: group
+        key: "{{ item.groups[0] }}"
+      register: group_entry
+      loop: "{{ user_setup_users }}"
 
-        - name: Assert group exists and user is a member
-          ansible.builtin.assert:
-            that:
-              - user_group in group_entry.ansible_facts.getent_group
-              - user_name in group_entry.ansible_facts.getent_group[user_group][2].split(',')
+    - name: Assert group exists and user is a member
+      ansible.builtin.assert:
+        that:
+          - item.item.groups[0] in item.ansible_facts.getent_group
+          - item.item.name in item.ansible_facts.getent_group[item.item.groups[0]][2].split(',')
+        fail_msg: "Group {{ item.item.groups[0] }} does not exist or {{ item.item.name }} is not a member"
+      loop: "{{ group_entry.results }}"
 
     - name: Check user directories exist
       ansible.builtin.stat:
-        path: "{{ user_home }}/{{ item }}"
-      loop: "{{ expected_directories }}"
+        path: "/home/{{ item.0.name }}/{{ item.1.name }}"
       register: dir_checks
+      loop: "{{ user_setup_users | subelements('user_directories') }}"
+      become: true
 
     - name: Assert all expected directories exist
       ansible.builtin.assert:
-        that: "{{ dir_checks.results | map(attribute='stat.exists') | list | min }}"
+        that: item.stat.exists
+        fail_msg: "Directory {{ item.item.1.name }} does not exist for user {{ item.item.0.name }}"
+      loop: "{{ dir_checks.results }}"
 
-    - name: Check env file exists
+    - name: Check env file exists for each user
       ansible.builtin.stat:
-        path: "{{ user_home }}/{{ env_file }}"
+        path: "/home/{{ item.name }}/{{ item.env_var_file }}"
       register: env_file_stat
+      loop: "{{ user_setup_users }}"
+      become: true
 
-    - name: Assert env file exists
+    - name: Assert env file exists for each user
       ansible.builtin.assert:
-        that: env_file_stat.stat.exists
+        that: item.stat.exists
+        fail_msg: "Env file does not exist for user {{ item.item.name }}"
+      loop: "{{ env_file_stat.results }}"
 
-    - name: Check SSH authorized_keys file exists
+    - name: Check SSH authorized_keys file exists for each user
       ansible.builtin.stat:
-        path: "{{ user_home }}/{{ user_setup_users[0].ssh_directory }}/authorized_keys"
+        path: "/home/{{ item.name }}/{{ item.ssh_directory }}/authorized_keys"
       register: ssh_stat
+      become: true
+      loop: "{{ user_setup_users }}"
 
-    - name: Assert SSH authorized_keys exists
+    - name: Assert SSH authorized_keys exists for each user
       ansible.builtin.assert:
-        that: ssh_stat.stat.exists
+        that: item.stat.exists
+        fail_msg: "SSH authorized_keys file does not exist for user {{ item.item.name }}"
+      loop: "{{ ssh_stat.results }}"
 
-    - name: Read authorized_keys content
+    - name: Read authorized_keys content for each user
       ansible.builtin.slurp:
-        path: "{{ user_home }}/{{ user_setup_users[0].ssh_directory }}/authorized_keys"
+        path: "/home/{{ item.name }}/{{ item.ssh_directory }}/authorized_keys"
       register: ssh_keys
+      become: true
+      loop: "{{ user_setup_users }}"
 
-    - name: Assert expected SSH key is present
+    - name: Assert all SSH keys are present
       ansible.builtin.assert:
-        that: ssh_key in (ssh_keys.content | b64decode)
+        that: item.1.key in (item.0.content | b64decode)
+        fail_msg: "SSH key not found for user {{ item.0.item.name }}"
+      loop: "{{ ssh_keys.results | subelements('item.ssh_authorized_keys') }}"
 
-    - name: Assert SSH key with options is formatted correctly
+    - name: Assert SSH keys with options are present in authorized_keys
       ansible.builtin.assert:
         that:
-          - (ssh_keys.content | b64decode) is search('from="192.168.1.0/24",no-agent-forwarding ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBL3\\+59egObwwPuBKo1caTnovj6ZliOumpwMcpdL3NV7 user@hostname')
+          - item.1.key in (item.0.content | b64decode)
+          - item.1.options | replace('\\', '') in (item.0.content | b64decode)
+        fail_msg: "SSH key with options not correctly formatted for user {{ item.0.item.name }}"
+      loop: "{{ ssh_keys.results | subelements('item.ssh_authorized_keys') }}"
+      when: item.1.options is defined
 
-    - name: Assert SSH key without options is present
-      ansible.builtin.assert:
-        that:
-          - (ssh_keys.content | b64decode) is search('ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7z8\\+NKavSZDvD8w5xOPKJWYYo9K3vX2LmPl1qJxL8 user@backup')
-
-    - name: Read /etc/shadow entry
-      ansible.builtin.command: grep "^{{ user_name }}:" /etc/shadow
+    - name: Read /etc/shadow entry for each user
+      ansible.builtin.command: grep "^{{ item.name }}:" /etc/shadow
       register: shadow_entry
       changed_when: false
+      become: true
+      loop: "{{ user_setup_users }}"
 
-    - name: Assert password is hashed with sha512
+    - name: Assert password is hashed with sha512 for each user
       ansible.builtin.assert:
-        that: shadow_entry.stdout is search("^{{ user_name }}:\\$6\\$")
+        that: item.stdout is search("^" ~ item.item.name ~ ":\\$6\\$")
+        fail_msg: "Password is not hashed with sha512 for user {{ item.item.name }}"
+      loop: "{{ shadow_entry.results }}"
 
-    - name: Verify sudo access
-      block:
-        - name: Check sudoers file exists
-          ansible.builtin.stat:
-            path: "/etc/sudoers.d/{{ user_name }}"
-          register: sudoers_file
+    - name: Check sudoers file exists for users with sudo access
+      ansible.builtin.stat:
+        path: "/etc/sudoers.d/{{ item.name }}"
+      register: sudoers_file
+      become: true
+      loop: "{{ user_setup_users }}"
+      when: item.sudo_access | default(false)
 
-        - name: Assert sudoers file exists
-          ansible.builtin.assert:
-            that: sudoers_file.stat.exists
+    - name: Assert sudoers file exists for users with sudo
+      ansible.builtin.assert:
+        that: item.stat.exists
+        fail_msg: "Sudoers file does not exist for user {{ item.item.name }}"
+      loop: "{{ sudoers_file.results }}"
+      when: not item.skipped | default(false)
 
-        - name: Assert sudoers file has correct permissions
-          ansible.builtin.assert:
-            that:
-              - sudoers_file.stat.mode == '0440'
-              - sudoers_file.stat.pw_name == 'root'
-              - sudoers_file.stat.gr_name == 'root'
+    - name: Assert sudoers file has correct permissions
+      ansible.builtin.assert:
+        that:
+          - item.stat.mode == '0440'
+          - item.stat.pw_name == 'root'
+          - item.stat.gr_name == 'root'
+        fail_msg: "Sudoers file has incorrect permissions for user {{ item.item.name }}"
+      loop: "{{ sudoers_file.results }}"
+      when: not item.skipped | default(false)
 
-        - name: Read sudoers file content
-          ansible.builtin.slurp:
-            path: "/etc/sudoers.d/{{ user_name }}"
-          register: sudoers_content
+    - name: Read sudoers file content for users with sudo
+      ansible.builtin.slurp:
+        path: "/etc/sudoers.d/{{ item.name }}"
+      register: sudoers_content
+      become: true
+      loop: "{{ user_setup_users }}"
+      when: item.sudo_access | default(false)
 
-        - name: Assert sudoers file contains NOPASSWD
-          ansible.builtin.assert:
-            that:
-              - (sudoers_content.content | b64decode) is search('{{ user_name }} ALL=\\(ALL\\) NOPASSWD:ALL')
+    - name: Assert sudoers file contains NOPASSWD for users with sudo_nopasswd
+      ansible.builtin.assert:
+        that:
+          - (item.content | b64decode) is search(item.item.name ~ ' ALL=\\(ALL\\) NOPASSWD:ALL')
+        fail_msg: "Sudoers file does not contain NOPASSWD for user {{ item.item.name }}"
+      loop: "{{ sudoers_content.results }}"
+      when:
+        - not item.skipped | default(false)
+        - item.item.sudo_nopasswd | default(false)
+
+    - name: Assert sudoers file does not contain NOPASSWD for users without sudo_nopasswd
+      ansible.builtin.assert:
+        that:
+          - (item.content | b64decode) is search(item.item.name ~ ' ALL=\\(ALL\\) ALL')
+          - (item.content | b64decode) is not search('NOPASSWD')
+        fail_msg: "Sudoers file incorrectly contains NOPASSWD for user {{ item.item.name }}"
+      loop: "{{ sudoers_content.results }}"
+      when:
+        - not item.skipped | default(false)
+        - not (item.item.sudo_nopasswd | default(false))
+
+    - name: Check sudoers file does not exist for users without sudo
+      ansible.builtin.stat:
+        path: "/etc/sudoers.d/{{ item.name }}"
+      register: no_sudoers_file
+      become: true
+      loop: "{{ user_setup_users }}"
+      when: not (item.sudo_access | default(false))
+
+    - name: Assert sudoers file does not exist for users without sudo
+      ansible.builtin.assert:
+        that: not item.stat.exists
+        fail_msg: "Sudoers file should not exist for user {{ item.item.name }}"
+      loop: "{{ no_sudoers_file.results }}"
+      when: not item.skipped | default(false)
