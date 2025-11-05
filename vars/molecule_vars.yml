@@ -1,9 +1,14 @@
 ---
 user_setup_user: "testuser"
+user_setup_user2: "testuser2"
 user_setup_password: "TempSec!Pass#"
+user_setup_password2: "TempPass2!#"
 user_setup_password_salt: "dc0b318e9e5511e1"
+user_setup_password_salt2: "af3d529f1a6622e2"
 user_setup_groups:
   - name: test
+    system: false
+  - name: developers
     system: false
 user_setup_users:
   - name: "{{ user_setup_user }}"
@@ -41,3 +46,26 @@ user_setup_users:
       - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBL3+59egObwwPuBKo1caTnovj6ZliOumpwMcpdL3NV7 user@hostname"
         options: 'from="192.168.1.0/24",no-agent-forwarding'
       - key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7z8+NKavSZDvD8w5xOPKJWYYo9K3vX2LmPl1qJxL8 user@backup"
+  - name: "{{ user_setup_user2 }}"
+    uid: 1501
+    shell: "/bin/zsh"
+    groups:
+      - developers
+    groups_append: true
+    password: "{{ user_setup_password2 | password_hash('sha512', user_setup_password_salt2) }}"
+    sudo_access: false
+    sudo_nopasswd: false
+    env_var_setup: true
+    env_var_file: ".env_vars"
+    user_directories:
+      - name: ".config"
+        env_var: "XDG_CONFIG_DIR"
+      - name: "projects"
+        env_var: "XDG_PROJECTS_DIR"
+      - name: "documents"
+        env_var: "XDG_DOCUMENTS_DIR"
+      - name: "downloads"
+        env_var: "XDG_DOWNLOAD_DIR"
+    ssh_directory: ".ssh"
+    ssh_authorized_keys:
+      - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN5GpP+W0Z3qM9qr8Jy9L4Zn5F2K1pO3qW5xR8tN4sQ2 testuser2@workstation"
