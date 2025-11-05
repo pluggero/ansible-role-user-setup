@@ -12,6 +12,7 @@
   ansible.builtin.stat:
     path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
   register: user_setup_authorized_keys
+  become: true
 
 - name: Ensure authorized_keys file exists
   ansible.builtin.file:

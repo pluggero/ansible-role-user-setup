@@ -3,6 +3,7 @@
   ansible.builtin.stat:
     path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.env_var_file }}"
   register: user_setup_env_var_file
+  become: true
 
 - name: Ensure env var file exists
   ansible.builtin.file:
