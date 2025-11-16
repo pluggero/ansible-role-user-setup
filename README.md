@@ -27,6 +27,7 @@ user_setup_users:
     state: present
     uid: 1500
     shell: "/bin/bash"
+    create_home: true
     groups: []
     groups_append: true
     password: "{{ user_setup_example_password | password_hash('sha512', user_setup_example_password_salt) }}"
@@ -76,6 +77,20 @@ To remove a user:
 user_setup_users:
   - name: olduser
     state: absent
+```
+
+**Home Directory Management:**
+
+- `create_home` (default: `true`): Controls whether a home directory is created for the user:
+  - When `true`: Creates a home directory for the user at `/home/<username>` (default behavior).
+  - When `false`: Does not create a home directory. The home directory path in `/etc/passwd` is set to `/nonexistent`, which is useful for service accounts and system users.
+
+To create a user without a home directory (e.g., for a service account):
+
+```yaml
+user_setup_users:
+  - name: serviceuser
+    create_home: false
 ```
 
 **SSH Authorized Keys Management:**

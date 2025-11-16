@@ -4,6 +4,8 @@
     name: "{{ user.name }}"
     state: "{{ user.state | default('present') }}"
     remove: true
+    create_home: "{{ user.create_home | default(true) }}"
+    home: "{{ '/nonexistent' if not (user.create_home | default(true)) else omit }}"
     uid: "{{ user.uid | default(omit) }}"
     shell: "{{ user.shell | default(omit) }}"
     groups: "{{ user.groups | default(omit) }}"

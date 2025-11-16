@@ -9,6 +9,7 @@ user_setup_users: []
 #   state: present
 #   uid: 1500
 #   shell: "/bin/bash"
+#   create_home: true
 #   groups: []
 #   groups_append: true
 #   password: "{{ user_setup_example_password | password_hash('sha512', user_setup_example_password_salt) }}"

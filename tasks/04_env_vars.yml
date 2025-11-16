@@ -5,4 +5,7 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  when: user.env_var_setup | default(false)
+  when:
+    - user.env_var_setup | default(false)
+    - user.state | default('present') == 'present'
+    - user.create_home | default(true)

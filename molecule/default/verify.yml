@@ -43,6 +43,14 @@
       loop: "{{ passwd_entry.results }}"
       when: not item.skipped | default(false)
 
+    - name: Assert user has correct home directory path in /etc/passwd
+      ansible.builtin.assert:
+        that:
+          - item.ansible_facts.getent_passwd[item.item.name][4] == ('/nonexistent' if not (item.item.create_home | default(true)) else '/home/' + item.item.name)
+        fail_msg: "User {{ item.item.name }} does not have correct home directory path in /etc/passwd"
+      loop: "{{ passwd_entry.results }}"
+      when: not item.skipped | default(false)
+
     - name: Get group for each user
       ansible.builtin.getent:
         database: group
@@ -60,12 +68,48 @@
       loop: "{{ group_entry.results }}"
       when: not item.skipped | default(false)
 
+    - name: Check home directory exists for users with create_home
+      ansible.builtin.stat:
+        path: "/home/{{ item.name }}"
+      register: home_dir_stat
+      loop: "{{ user_setup_users }}"
+      become: true
+      when:
+        - item.state | default('present') == 'present'
+        - item.create_home | default(true)
+
+    - name: Assert home directory exists for users with create_home
+      ansible.builtin.assert:
+        that: item.stat.exists
+        fail_msg: "Home directory does not exist for user {{ item.item.name }}"
+      loop: "{{ home_dir_stat.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Check home directory does not exist for users without create_home
+      ansible.builtin.stat:
+        path: "/home/{{ item.name }}"
+      register: no_home_dir_stat
+      loop: "{{ user_setup_users }}"
+      become: true
+      when:
+        - item.state | default('present') == 'present'
+        - not (item.create_home | default(true))
+
+    - name: Assert home directory does not exist for users without create_home
+      ansible.builtin.assert:
+        that: not item.stat.exists
+        fail_msg: "Home directory should not exist for user {{ item.item.name }}"
+      loop: "{{ no_home_dir_stat.results }}"
+      when: not item.skipped | default(false)
+
     - name: Check user directories exist
       ansible.builtin.stat:
         path: "/home/{{ item.0.name }}/{{ item.1.name }}"
       register: dir_checks
       loop: "{{ user_setup_users | selectattr('user_directories', 'defined') | list | subelements('user_directories', skip_missing=True) }}"
-      when: item.0.state | default('present') != 'absent'
+      when:
+        - item.0.state | default('present') == 'present'
+        - item.0.create_home | default(true)
       become: true
 
     - name: Assert all expected directories exist
@@ -81,7 +125,10 @@
       register: env_file_stat
       loop: "{{ user_setup_users }}"
       become: true
-      when: item.state | default('present') == 'present'
+      when:
+        - item.state | default('present') == 'present'
+        - item.create_home | default(true)
+        - item.env_var_setup | default(false)
 
     - name: Assert env file exists for each user
       ansible.builtin.assert:
@@ -96,7 +143,11 @@
       register: ssh_stat
       become: true
       loop: "{{ user_setup_users }}"
-      when: item.state | default('present') == 'present'
+      when:
+        - item.state | default('present') == 'present'
+        - item.create_home | default(true)
+        - item.ssh_authorized_keys is defined
+        - item.ssh_authorized_keys | length > 0
 
     - name: Assert SSH authorized_keys exists for each user
       ansible.builtin.assert:
@@ -111,7 +162,11 @@
       register: ssh_keys
       become: true
       loop: "{{ user_setup_users }}"
-      when: item.state | default('present') == 'present'
+      when:
+        - item.state | default('present') == 'present'
+        - item.create_home | default(true)
+        - item.ssh_authorized_keys is defined
+        - item.ssh_authorized_keys | length > 0
 
     - name: Assert all SSH keys are present
       ansible.builtin.assert:

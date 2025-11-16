@@ -1,10 +1,13 @@
 ---
 user_setup_user: "testuser"
 user_setup_user2: "testuser2"
+user_setup_user3: "testuser3"
 user_setup_password: "TempSec!Pass#"
 user_setup_password2: "TempPass2!#"
+user_setup_password3: "TempPass3!#"
 user_setup_password_salt: "dc0b318e9e5511e1"
 user_setup_password_salt2: "af3d529f1a6622e2"
+user_setup_password_salt3: "bc4e427d2e7733f3"
 user_setup_groups:
   - name: test
     system: false
@@ -74,5 +77,15 @@ user_setup_users:
     ssh_authorized_keys_exclusive: false
     ssh_authorized_keys:
       - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN5GpP+W0Z3qM9qr8Jy9L4Zn5F2K1pO3qW5xR8tN4sQ2 testuser2@workstation"
+  - name: "{{ user_setup_user3 }}"
+    uid: 1502
+    shell: "/bin/sh"
+    create_home: false
+    groups:
+      - developers
+    groups_append: true
+    password: "{{ user_setup_password3 | password_hash('sha512', user_setup_password_salt3) }}"
+    sudo_access: true
+    sudo_nopasswd: false
   - name: removeduser
     state: absent
