@@ -52,6 +52,7 @@ user_setup_users:
       - name: "videos"
         env_var: "XDG_VIDEOS_DIR"
     ssh_directory: ".ssh"
+    ssh_authorized_keys_exclusive: false
     ssh_authorized_keys:
       - key: "ssh-ed25519 AAAA... user@laptop"
         options: 'from="192.168.1.0/24",no-agent-forwarding'
@@ -60,6 +61,15 @@ user_setup_users:
 
 The users to create can be defined in the variable `user_setup_users`.
 In the example above the `user_setup_example_password` and `user_setup_example_password_salt` should be stored securely in a vault.
+
+**SSH Authorized Keys Management:**
+
+- `ssh_authorized_keys_exclusive` (default: `false`): Controls how SSH keys are managed:
+  - When `true`: The role creates a complete authorized_keys file containing only the keys specified in `ssh_authorized_keys`. Any existing keys not in this list will be removed.
+  - When `false`: Keys are added to the authorized_keys file without removing any existing keys (append-only mode).
+- SSH keys can be specified as:
+  - Direct key strings: `"ssh-ed25519 AAAA... user@host"`
+- Key options can be specified using the `options` parameter for fine-grained access control (e.g., `from="192.168.1.0/24",no-agent-forwarding`).
 
 ## Dependencies
 

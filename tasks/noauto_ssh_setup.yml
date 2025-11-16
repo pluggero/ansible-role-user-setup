@@ -24,7 +24,47 @@
   become: true
   when: not user_setup_authorized_keys.stat.exists
 
-- name: Ensure authorized_keys file is populated
+- name: Manage authorized_keys in exclusive mode
+  when: user.ssh_authorized_keys_exclusive | default(false)
+  block:
+    - name: Create temporary directory for temp file
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: _ssh_keys
+      register: user_setup_temp_dir
+      become: true
+      changed_when: false
+
+    - name: Build temp authorized_keys file
+      ansible.builtin.lineinfile:
+        path: "{{ user_setup_temp_dir.path }}/authorized_keys"
+        line: "{{ (key_entry.options | default('') ~ ' ' if key_entry.options is defined else '') ~ key_entry.key }}"
+        create: true
+        mode: "600"
+      loop: "{{ user.ssh_authorized_keys }}"
+      loop_control:
+        loop_var: key_entry
+      become: true
+      changed_when: false
+
+    - name: Copy temp file to replace authorized_keys
+      ansible.builtin.copy:
+        src: "{{ user_setup_temp_dir.path }}/authorized_keys"
+        dest: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
+        owner: "{{ user.name }}"
+        group: "{{ user.name }}"
+        mode: "600"
+        remote_src: true
+      become: true
+
+    - name: Clean up temporary directory
+      ansible.builtin.file:
+        path: "{{ user_setup_temp_dir.path }}"
+        state: absent
+      become: true
+      changed_when: false
+
+- name: Ensure authorized_keys file is populated (non-exclusive mode)
   ansible.builtin.lineinfile:
     path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
     line: "{{ (key_entry.options | default('') ~ ' ' if key_entry.options is defined else '') ~ key_entry.key }}"
@@ -32,3 +72,4 @@
   loop: "{{ user.ssh_authorized_keys }}"
   loop_control:
     loop_var: key_entry
+  when: not (user.ssh_authorized_keys_exclusive | default(false))
