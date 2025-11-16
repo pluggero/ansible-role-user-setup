@@ -10,6 +10,9 @@ user_setup_groups:
     system: false
   - name: developers
     system: false
+  - name: removeme
+    system: false
+    state: absent
 user_setup_users:
   - name: "{{ user_setup_user }}"
     uid: 1500
@@ -71,3 +74,5 @@ user_setup_users:
     ssh_authorized_keys_exclusive: false
     ssh_authorized_keys:
       - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN5GpP+W0Z3qM9qr8Jy9L4Zn5F2K1pO3qW5xR8tN4sQ2 testuser2@workstation"
+  - name: removeduser
+    state: absent

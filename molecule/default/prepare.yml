@@ -1,0 +1,33 @@
+---
+- name: Prepare
+  hosts: all
+
+  vars:
+    ansible_user: ansible
+    ansible_become_password: ansible
+
+  tasks:
+    - name: Create group to be removed
+      ansible.builtin.group:
+        name: removeme
+        state: present
+      become: true
+
+    - name: Create user to be removed
+      ansible.builtin.user:
+        name: removeduser
+        uid: 9999
+        state: present
+        shell: /bin/bash
+        create_home: true
+      become: true
+
+    - name: Create sudoers file for user to be removed
+      ansible.builtin.copy:
+        content: "removeduser ALL=(ALL) NOPASSWD:ALL\n"
+        dest: /etc/sudoers.d/removeduser
+        mode: "0440"
+        owner: root
+        group: root
+        validate: /usr/sbin/visudo -cf %s
+      become: true
