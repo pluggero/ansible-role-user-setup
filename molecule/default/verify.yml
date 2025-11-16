@@ -17,6 +17,7 @@
         key: "{{ item.name }}"
       register: passwd_entry
       loop: "{{ user_setup_users }}"
+      when: item.state | default('present') == 'present'
 
     - name: Assert user was created
       ansible.builtin.assert:
@@ -24,6 +25,7 @@
           - item.item.name in item.ansible_facts.getent_passwd
         fail_msg: "User {{ item.item.name }} was not created"
       loop: "{{ passwd_entry.results }}"
+      when: not item.skipped | default(false)
 
     - name: Assert user has correct shell
       ansible.builtin.assert:
@@ -31,6 +33,7 @@
           - item.ansible_facts.getent_passwd[item.item.name][5] == item.item.shell
         fail_msg: "User {{ item.item.name }} does not have correct shell"
       loop: "{{ passwd_entry.results }}"
+      when: not item.skipped | default(false)
 
     - name: Assert user has correct UID
       ansible.builtin.assert:
@@ -38,6 +41,7 @@
           - item.ansible_facts.getent_passwd[item.item.name][1] | int == item.item.uid | int
         fail_msg: "User {{ item.item.name }} does not have correct UID"
       loop: "{{ passwd_entry.results }}"
+      when: not item.skipped | default(false)
 
     - name: Get group for each user
       ansible.builtin.getent:
@@ -45,6 +49,7 @@
         key: "{{ item.groups[0] }}"
       register: group_entry
       loop: "{{ user_setup_users }}"
+      when: item.state | default('present') == 'present'
 
     - name: Assert group exists and user is a member
       ansible.builtin.assert:
@@ -53,12 +58,14 @@
           - item.item.name in item.ansible_facts.getent_group[item.item.groups[0]][2].split(',')
         fail_msg: "Group {{ item.item.groups[0] }} does not exist or {{ item.item.name }} is not a member"
       loop: "{{ group_entry.results }}"
+      when: not item.skipped | default(false)
 
     - name: Check user directories exist
       ansible.builtin.stat:
         path: "/home/{{ item.0.name }}/{{ item.1.name }}"
       register: dir_checks
-      loop: "{{ user_setup_users | subelements('user_directories') }}"
+      loop: "{{ user_setup_users | selectattr('user_directories', 'defined') | list | subelements('user_directories', skip_missing=True) }}"
+      when: item.0.state | default('present') != 'absent'
       become: true
 
     - name: Assert all expected directories exist
@@ -66,6 +73,7 @@
         that: item.stat.exists
         fail_msg: "Directory {{ item.item.1.name }} does not exist for user {{ item.item.0.name }}"
       loop: "{{ dir_checks.results }}"
+      when: not item.skipped | default(false)
 
     - name: Check env file exists for each user
       ansible.builtin.stat:
@@ -73,12 +81,14 @@
       register: env_file_stat
       loop: "{{ user_setup_users }}"
       become: true
+      when: item.state | default('present') == 'present'
 
     - name: Assert env file exists for each user
       ansible.builtin.assert:
         that: item.stat.exists
         fail_msg: "Env file does not exist for user {{ item.item.name }}"
       loop: "{{ env_file_stat.results }}"
+      when: not item.skipped | default(false)
 
     - name: Check SSH authorized_keys file exists for each user
       ansible.builtin.stat:
@@ -86,12 +96,14 @@
       register: ssh_stat
       become: true
       loop: "{{ user_setup_users }}"
+      when: item.state | default('present') == 'present'
 
     - name: Assert SSH authorized_keys exists for each user
       ansible.builtin.assert:
         that: item.stat.exists
         fail_msg: "SSH authorized_keys file does not exist for user {{ item.item.name }}"
       loop: "{{ ssh_stat.results }}"
+      when: not item.skipped | default(false)
 
     - name: Read authorized_keys content for each user
       ansible.builtin.slurp:
@@ -99,12 +111,13 @@
       register: ssh_keys
       become: true
       loop: "{{ user_setup_users }}"
+      when: item.state | default('present') == 'present'
 
     - name: Assert all SSH keys are present
       ansible.builtin.assert:
         that: item.1.key in (item.0.content | b64decode)
         fail_msg: "SSH key not found for user {{ item.0.item.name }}"
-      loop: "{{ ssh_keys.results | subelements('item.ssh_authorized_keys') }}"
+      loop: "{{ ssh_keys.results | rejectattr('skipped', 'defined') | list | subelements('item.ssh_authorized_keys') }}"
 
     - name: Assert SSH keys with options are present in authorized_keys
       ansible.builtin.assert:
@@ -112,7 +125,7 @@
           - item.1.key in (item.0.content | b64decode)
           - item.1.options | replace('\\', '') in (item.0.content | b64decode)
         fail_msg: "SSH key with options not correctly formatted for user {{ item.0.item.name }}"
-      loop: "{{ ssh_keys.results | subelements('item.ssh_authorized_keys') }}"
+      loop: "{{ ssh_keys.results | rejectattr('skipped', 'defined') | list | subelements('item.ssh_authorized_keys') }}"
       when: item.1.options is defined
 
     - name: Assert exclusive mode removes unlisted keys
@@ -121,7 +134,9 @@
           - (item.content | b64decode).split('\n') | reject('match', '^$') | list | length == item.item.ssh_authorized_keys | length
         fail_msg: "Exclusive mode failed - authorized_keys contains more keys than specified for user {{ item.item.name }}"
       loop: "{{ ssh_keys.results }}"
-      when: item.item.ssh_authorized_keys_exclusive | default(false)
+      when:
+        - not item.skipped | default(false)
+        - item.item.ssh_authorized_keys_exclusive | default(false)
 
     - name: Read /etc/shadow entry for each user
       ansible.builtin.command: grep "^{{ item.name }}:" /etc/shadow
@@ -129,12 +144,14 @@
       changed_when: false
       become: true
       loop: "{{ user_setup_users }}"
+      when: item.state | default('present') == 'present'
 
     - name: Assert password is hashed with sha512 for each user
       ansible.builtin.assert:
         that: item.stdout is search("^" ~ item.item.name ~ ":\\$6\\$")
         fail_msg: "Password is not hashed with sha512 for user {{ item.item.name }}"
       loop: "{{ shadow_entry.results }}"
+      when: not item.skipped | default(false)
 
     - name: Check sudoers file exists for users with sudo access
       ansible.builtin.stat:
@@ -203,4 +220,58 @@
         that: not item.stat.exists
         fail_msg: "Sudoers file should not exist for user {{ item.item.name }}"
       loop: "{{ no_sudoers_file.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Assert absent users do not exist
+      ansible.builtin.command: id {{ item.name }}
+      register: absent_user_check
+      failed_when: absent_user_check.rc == 0
+      changed_when: false
+      loop: "{{ user_setup_users }}"
+      when: item.state | default('present') == 'absent'
+
+    - name: Assert home directories do not exist for absent users
+      ansible.builtin.stat:
+        path: "/home/{{ item.name }}"
+      register: absent_user_home
+      become: true
+      loop: "{{ user_setup_users }}"
+      when: item.state | default('present') == 'absent'
+
+    - name: Assert home directory was removed for absent users
+      ansible.builtin.assert:
+        that: not item.stat.exists
+        fail_msg: "Home directory still exists for removed user {{ item.item.name }}"
+      loop: "{{ absent_user_home.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Assert sudoers files do not exist for absent users
+      ansible.builtin.stat:
+        path: "/etc/sudoers.d/{{ item.name }}"
+      register: absent_user_sudoers
+      become: true
+      loop: "{{ user_setup_users }}"
+      when: item.state | default('present') == 'absent'
+
+    - name: Assert sudoers file was removed for absent users
+      ansible.builtin.assert:
+        that: not item.stat.exists
+        fail_msg: "Sudoers file still exists for removed user {{ item.item.name }}"
+      loop: "{{ absent_user_sudoers.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Assert absent groups do not exist
+      ansible.builtin.getent:
+        database: group
+        key: "{{ item.name }}"
+      register: absent_group_check
+      failed_when: false
+      loop: "{{ user_setup_groups }}"
+      when: item.state | default('present') == 'absent'
+
+    - name: Assert group was removed
+      ansible.builtin.assert:
+        that: item.ansible_facts is not defined
+        fail_msg: "Group {{ item.item.name }} still exists but should be absent"
+      loop: "{{ absent_group_check.results }}"
       when: not item.skipped | default(false)

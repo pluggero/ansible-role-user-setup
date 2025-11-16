@@ -2,18 +2,16 @@
 - name: Manage users
   ansible.builtin.user:
     name: "{{ user.name }}"
+    state: "{{ user.state | default('present') }}"
+    remove: true
     uid: "{{ user.uid | default(omit) }}"
-    shell: "{{ user.shell }}"
-    groups: "{{ user.groups }}"
-    append: "{{ user.groups_append }}"
+    shell: "{{ user.shell | default(omit) }}"
+    groups: "{{ user.groups | default(omit) }}"
+    append: "{{ user.groups_append | default(omit) }}"
   become: true
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  when:
-    - user.shell is defined
-    - user.groups is defined
-    - user.groups_append is defined
 
 - name: Fetch user and group information
   ansible.builtin.getent:

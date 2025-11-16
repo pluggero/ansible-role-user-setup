@@ -5,4 +5,16 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  when: user.sudo_access is defined and user.sudo_access
+  when:
+    - user.state | default('present') == 'present'
+    - user.sudo_access is defined and user.sudo_access
+
+- name: Remove sudoers file for absent users
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ user.name }}"
+    state: absent
+  become: true
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+  when: user.state | default('present') == 'absent'

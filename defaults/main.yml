@@ -2,9 +2,11 @@
 user_setup_groups: []
 # - name: test
 #   system: false
+#   state: present
 
 user_setup_users: []
 # - name: "{{ ansible_user }}"
+#   state: present
 #   uid: 1500
 #   shell: "/bin/bash"
 #   groups: []

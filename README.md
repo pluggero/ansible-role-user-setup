@@ -16,13 +16,15 @@ Available variables are listed below, along with default values (see `defaults/m
 user_setup_groups:
   - name: test
     system: false
+    state: present
 ```
 
-The groups to create can be defined in the variable `user_setup_groups`.
+The groups to create can be defined in the variable `user_setup_groups`. Set `state: absent` to remove a group.
 
 ```yaml
 user_setup_users:
   - name: "{{ ansible_user }}"
+    state: present
     uid: 1500
     shell: "/bin/bash"
     groups: []
@@ -61,6 +63,20 @@ user_setup_users:
 
 The users to create can be defined in the variable `user_setup_users`.
 In the example above the `user_setup_example_password` and `user_setup_example_password_salt` should be stored securely in a vault.
+
+**User State Management:**
+
+- `state` (default: `present`): Controls user lifecycle:
+  - When `present`: Creates or updates the user with the specified configuration.
+  - When `absent`: Removes the user and their home directory. Also removes associated sudoers files.
+
+To remove a user:
+
+```yaml
+user_setup_users:
+  - name: olduser
+    state: absent
+```
 
 **SSH Authorized Keys Management:**
 
