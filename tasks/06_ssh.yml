@@ -5,4 +5,8 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  when: user.ssh_authorized_keys is defined and (user.ssh_authorized_keys | length > 0)
+  when:
+    - user.ssh_authorized_keys is defined
+    - user.ssh_authorized_keys | length > 0
+    - user.state | default('present') == 'present'
+    - user.create_home | default(true)
