@@ -34,6 +34,7 @@ user_setup_users: []
 #     - name: "videos"
 #       env_var: "XDG_VIDEOS_DIR"
 #   ssh_directory: ".ssh"
+#   ssh_authorized_keys_exclusive: false
 #   ssh_authorized_keys: []
 #     - key: "ssh-ed25519 AAAA... user@host"
 #       options: 'from="192.168.1.0/24",no-agent-forwarding'

@@ -115,6 +115,14 @@
       loop: "{{ ssh_keys.results | subelements('item.ssh_authorized_keys') }}"
       when: item.1.options is defined
 
+    - name: Assert exclusive mode removes unlisted keys
+      ansible.builtin.assert:
+        that:
+          - (item.content | b64decode).split('\n') | reject('match', '^$') | list | length == item.item.ssh_authorized_keys | length
+        fail_msg: "Exclusive mode failed - authorized_keys contains more keys than specified for user {{ item.item.name }}"
+      loop: "{{ ssh_keys.results }}"
+      when: item.item.ssh_authorized_keys_exclusive | default(false)
+
     - name: Read /etc/shadow entry for each user
       ansible.builtin.command: grep "^{{ item.name }}:" /etc/shadow
       register: shadow_entry
