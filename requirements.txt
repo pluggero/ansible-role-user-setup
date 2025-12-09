@@ -1,6 +1,6 @@
 # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
 passlib
 yamllint==1.37.1
-ansible==13.0.0
+ansible==13.1.0
 molecule==25.12.0
 molecule-plugins[docker]==25.8.12
