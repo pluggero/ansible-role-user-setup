@@ -51,6 +51,7 @@ jobs:
           - debian12
           - archlinux
           - alpinelinux
+          - rockylinux9
 
     steps:
       - name: Check out the codebase
