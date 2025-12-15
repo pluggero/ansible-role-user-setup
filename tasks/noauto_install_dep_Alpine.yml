@@ -1,0 +1,17 @@
+---
+- name: Ensure we are using apk
+  ansible.builtin.fail:
+    msg: "This role only supports {{ ansible_os_family }} systems that use apk as a package manager."
+  when: ansible_pkg_mgr != "apk"
+
+- name: Install user_setup dependencies via apk
+  block:
+    - name: Ensure user_setup dependencies are installed
+      community.general.apk:
+        name: "{{ package }}"
+        state: present
+        no_cache: true
+      loop: "{{ user_setup_dep_pkgs }}"
+      loop_control:
+        loop_var: package
+      become: true

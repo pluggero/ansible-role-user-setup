@@ -16,5 +16,8 @@ galaxy_info:
     - name: Debian
       versions:
         - bookworm
+    - name: Alpine
+      versions:
+        - all
 
   galaxy_tags: []
