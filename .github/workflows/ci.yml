@@ -50,6 +50,7 @@ jobs:
         distro:
           - debian12
           - archlinux
+          - alpinelinux
 
     steps:
       - name: Check out the codebase
