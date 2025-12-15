@@ -1,0 +1,16 @@
+---
+- name: Ensure we are using dnf
+  ansible.builtin.fail:
+    msg: "This role only supports {{ ansible_os_family }} systems that use dnf as a package manager."
+  when: ansible_pkg_mgr != "dnf"
+
+- name: Install user_setup dependencies via dnf
+  block:
+    - name: Ensure user_setup dependencies are installed
+      ansible.builtin.dnf:
+        name: "{{ package }}"
+        state: present
+      loop: "{{ user_setup_dep_pkgs }}"
+      loop_control:
+        loop_var: package
+      become: true
