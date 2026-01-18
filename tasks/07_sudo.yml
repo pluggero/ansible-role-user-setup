@@ -11,7 +11,7 @@
 
 - name: Remove sudoers file for absent users
   ansible.builtin.file:
-    path: "/etc/sudoers.d/{{ user.name }}"
+    path: "{{ user_setup_sudoers_d_dir }}/{{ user.name }}"
     state: absent
   become: true
   loop: "{{ user_setup_users }}"

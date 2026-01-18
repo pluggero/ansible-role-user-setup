@@ -1,0 +1,7 @@
+---
+user_setup_dep_pkgs:
+  - xdg-utils
+  - sudo
+
+user_setup_sudoers_file: /usr/local/etc/sudoers
+user_setup_sudoers_d_dir: /usr/local/etc/sudoers.d

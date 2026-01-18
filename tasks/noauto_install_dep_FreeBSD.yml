@@ -1,0 +1,21 @@
+---
+- name: Ensure we are using pkg
+  ansible.builtin.fail:
+    msg: "This role only supports {{ ansible_os_family }} systems that use pkg as a package manager."
+  when: ansible_pkg_mgr != "pkgng"
+
+- name: Install user_setup dependencies via pkg
+  block:
+    - name: Update pkg repository catalog
+      ansible.builtin.command: pkg update
+      changed_when: false # Repository update is a preparatory operation, not a state change
+      become: true
+
+    - name: Ensure user_setup dependencies are installed
+      community.general.pkgng:
+        name: "{{ package }}"
+        state: present
+      loop: "{{ user_setup_dep_pkgs }}"
+      loop_control:
+        loop_var: package
+      become: true

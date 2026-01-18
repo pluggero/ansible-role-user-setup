@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/pluggero/ansible-role-user-setup/actions/workflows/ci.yml/badge.svg)](https://github.com/pluggero/ansible-role-user-setup/actions/workflows/ci.yml) [![Ansible Galaxy downloads](https://img.shields.io/ansible/role/d/pluggero/user_setup?label=Galaxy%20downloads&logo=ansible&color=%23096598)](https://galaxy.ansible.com/ui/standalone/roles/pluggero/user_setup)
 
-An Ansible Role that performs a basic user setup on differnet Linux distributions.
+An Ansible Role that performs a basic user setup on different Linux distributions and FreeBSD.
 
 ## Requirements
 
@@ -101,6 +101,11 @@ user_setup_users:
 - SSH keys can be specified as:
   - Direct key strings: `"ssh-ed25519 AAAA... user@host"`
 - Key options can be specified using the `options` parameter for fine-grained access control (e.g., `from="192.168.1.0/24",no-agent-forwarding`).
+
+**FreeBSD-Specific Behavior:**
+
+- Users with `sudo_access: true` are automatically added to the `wheel` group (required for privilege escalation on FreeBSD).
+- The role uses `/usr/local/sbin/visudo` for sudoers file validation on FreeBSD (instead of `/usr/sbin/visudo`).
 
 ## Dependencies
 

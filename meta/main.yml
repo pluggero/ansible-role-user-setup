@@ -19,5 +19,8 @@ galaxy_info:
     - name: Alpine
       versions:
         - all
+    - name: FreeBSD
+      versions:
+        - "14.3"
 
   galaxy_tags: []
