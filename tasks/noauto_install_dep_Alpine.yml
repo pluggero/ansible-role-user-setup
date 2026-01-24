@@ -9,7 +9,7 @@
     - name: Update apk cache
       community.general.apk:
         update_cache: true
-      changed_when: false # Cache update is a preparatory operation, not a state change
+      changed_when: false # The apk module currently does not support cache_valid_time.
       become: true
 
     - name: Ensure user_setup dependencies are installed
