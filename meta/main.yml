@@ -21,6 +21,6 @@ galaxy_info:
         - all
     - name: FreeBSD
       versions:
-        - "14.3"
+        - "14.0"
 
   galaxy_tags: []
