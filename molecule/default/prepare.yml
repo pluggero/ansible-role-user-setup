@@ -4,6 +4,7 @@
 
   vars:
     ansible_user: ansible
+    ansible_password: ansible
     ansible_become_password: ansible
 
   tasks:
