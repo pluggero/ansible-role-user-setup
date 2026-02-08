@@ -50,7 +50,7 @@ jobs:
             vagrant_box_version: "2026.02.08"
             vagrant_ssh_shell: "/bin/bash"
           - vagrant_box: debian12
-            vagrant_box_version: "2025.12.28"
+            vagrant_box_version: "2026.02.08"
             vagrant_ssh_shell: "/bin/bash"
           - vagrant_box: archlinux
             vagrant_box_version: "2026.02.08"
