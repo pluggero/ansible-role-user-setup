@@ -9,18 +9,18 @@
 
 - name: Set OS-specific root group
   ansible.builtin.set_fact:
-    root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else 'root' }}"
+    user_setup_root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else 'root' }}"
 
 - name: Set visudo path for OS family
   ansible.builtin.set_fact:
-    visudo_path: "{{ '/usr/local/sbin/visudo' if ansible_os_family == 'FreeBSD' else '/usr/sbin/visudo' }}"
+    user_setup_visudo_path: "{{ '/usr/local/sbin/visudo' if ansible_os_family == 'FreeBSD' else '/usr/sbin/visudo' }}"
 
 - name: Ensure main sudoers file includes sudoers.d directory
   ansible.builtin.lineinfile:
     path: "{{ user_setup_sudoers_file }}"
     line: "@includedir {{ user_setup_sudoers_d_dir }}"
     state: present
-    validate: "{{ visudo_path }} -cf %s"
+    validate: "{{ user_setup_visudo_path }} -cf %s"
     create: false
   become: true
 
@@ -30,7 +30,7 @@
     state: directory
     mode: "0750"
     owner: root
-    group: "{{ root_group }}"
+    group: "{{ user_setup_root_group }}"
   become: true
 
 - name: Create sudoers file for user
@@ -39,6 +39,6 @@
     dest: "{{ user_setup_sudoers_d_dir }}/{{ user.name }}"
     mode: "0440"
     owner: root
-    group: "{{ root_group }}"
-    validate: "{{ visudo_path }} -cf %s"
+    group: "{{ user_setup_root_group }}"
+    validate: "{{ user_setup_visudo_path }} -cf %s"
   become: true
