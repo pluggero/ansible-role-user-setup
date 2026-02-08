@@ -2,3 +2,6 @@
 user_setup_dep_pkgs:
   - xdg-utils
   - sudo
+
+user_setup_sudoers_file: /etc/sudoers
+user_setup_sudoers_d_dir: /etc/sudoers.d

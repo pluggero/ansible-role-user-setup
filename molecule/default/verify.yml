@@ -1,17 +1,29 @@
 ---
 - name: Verify user_setup role was applied correctly
   hosts: all
-  gather_facts: false
+  gather_facts: true
 
   vars_files:
     - ../../vars/molecule_vars.yml
 
   vars:
+    role_path: "{{ playbook_dir }}/../.."  # noqa: var-naming[read-only]
     ansible_user: ansible
     ansible_password: ansible
     ansible_become_password: ansible
 
   tasks:
+    - name: Include OS-specific variables
+      ansible.builtin.include_vars: "{{ var_file }}"
+      with_first_found:
+        - "{{ role_path }}/vars/{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+        - "{{ role_path }}/vars/{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
+        - "{{ role_path }}/vars/{{ ansible_distribution }}.yml"
+        - "{{ role_path }}/vars/{{ ansible_os_family }}.yml"
+        - "{{ role_path }}/vars/{{ ansible_lsb.id }}.yml"
+      loop_control:
+        loop_var: var_file
+
     - name: Get passwd for user
       ansible.builtin.getent:
         database: passwd
@@ -194,8 +206,12 @@
         - not item.skipped | default(false)
         - item.item.ssh_authorized_keys_exclusive | default(false)
 
-    - name: Read /etc/shadow entry for each user
-      ansible.builtin.command: grep "^{{ item.name }}:" /etc/shadow
+    - name: Set password file path based on OS
+      ansible.builtin.set_fact:
+        password_file: "{{ '/etc/master.passwd' if ansible_os_family == 'FreeBSD' else '/etc/shadow' }}"
+
+    - name: Read password entry for each user
+      ansible.builtin.command: grep "^{{ item.name }}:" {{ password_file }}
       register: shadow_entry
       changed_when: false
       become: true
@@ -211,7 +227,7 @@
 
     - name: Check sudoers file exists for users with sudo access
       ansible.builtin.stat:
-        path: "/etc/sudoers.d/{{ item.name }}"
+        path: "{{ user_setup_sudoers_d_dir }}/{{ item.name }}"
       register: sudoers_file
       become: true
       loop: "{{ user_setup_users }}"
@@ -224,19 +240,23 @@
       loop: "{{ sudoers_file.results }}"
       when: not item.skipped | default(false)
 
+    - name: Set expected root group based on OS
+      ansible.builtin.set_fact:
+        expected_root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else 'root' }}"
+
     - name: Assert sudoers file has correct permissions
       ansible.builtin.assert:
         that:
           - item.stat.mode == '0440'
           - item.stat.pw_name == 'root'
-          - item.stat.gr_name == 'root'
+          - item.stat.gr_name == expected_root_group
         fail_msg: "Sudoers file has incorrect permissions for user {{ item.item.name }}"
       loop: "{{ sudoers_file.results }}"
       when: not item.skipped | default(false)
 
     - name: Read sudoers file content for users with sudo
       ansible.builtin.slurp:
-        path: "/etc/sudoers.d/{{ item.name }}"
+        path: "{{ user_setup_sudoers_d_dir }}/{{ item.name }}"
       register: sudoers_content
       become: true
       loop: "{{ user_setup_users }}"
@@ -265,7 +285,7 @@
 
     - name: Check sudoers file does not exist for users without sudo
       ansible.builtin.stat:
-        path: "/etc/sudoers.d/{{ item.name }}"
+        path: "{{ user_setup_sudoers_d_dir }}/{{ item.name }}"
       register: no_sudoers_file
       become: true
       loop: "{{ user_setup_users }}"
@@ -303,7 +323,7 @@
 
     - name: Assert sudoers files do not exist for absent users
       ansible.builtin.stat:
-        path: "/etc/sudoers.d/{{ item.name }}"
+        path: "{{ user_setup_sudoers_d_dir }}/{{ item.name }}"
       register: absent_user_sudoers
       become: true
       loop: "{{ user_setup_users }}"

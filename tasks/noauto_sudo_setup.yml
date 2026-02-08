@@ -1,19 +1,44 @@
 ---
+- name: Add user to wheel group on FreeBSD
+  ansible.builtin.user:
+    name: "{{ user.name }}"
+    groups: wheel
+    append: true
+  become: true
+  when: ansible_os_family == "FreeBSD"
+
+- name: Set OS-specific root group
+  ansible.builtin.set_fact:
+    user_setup_root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else 'root' }}"
+
+- name: Set visudo path for OS family
+  ansible.builtin.set_fact:
+    user_setup_visudo_path: "{{ '/usr/local/sbin/visudo' if ansible_os_family == 'FreeBSD' else '/usr/sbin/visudo' }}"
+
+- name: Ensure main sudoers file includes sudoers.d directory
+  ansible.builtin.lineinfile:
+    path: "{{ user_setup_sudoers_file }}"
+    line: "@includedir {{ user_setup_sudoers_d_dir }}"
+    state: present
+    validate: "{{ user_setup_visudo_path }} -cf %s"
+    create: false
+  become: true
+
 - name: Ensure sudoers.d directory exists
   ansible.builtin.file:
-    path: /etc/sudoers.d
+    path: "{{ user_setup_sudoers_d_dir }}"
     state: directory
     mode: "0750"
     owner: root
-    group: root
+    group: "{{ user_setup_root_group }}"
   become: true
 
 - name: Create sudoers file for user
   ansible.builtin.copy:
     content: "{{ user.name }} ALL=(ALL) {{ 'NOPASSWD:' if user.sudo_nopasswd | default(false) else '' }}ALL\n"
-    dest: "/etc/sudoers.d/{{ user.name }}"
+    dest: "{{ user_setup_sudoers_d_dir }}/{{ user.name }}"
     mode: "0440"
     owner: root
-    group: root
-    validate: /usr/sbin/visudo -cf %s
+    group: "{{ user_setup_root_group }}"
+    validate: "{{ user_setup_visudo_path }} -cf %s"
   become: true

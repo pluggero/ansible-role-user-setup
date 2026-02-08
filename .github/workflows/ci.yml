@@ -55,6 +55,9 @@ jobs:
           - vagrant_box: archlinux
             vagrant_box_version: "2026.02.08"
             vagrant_ssh_shell: "/bin/bash"
+          - vagrant_box: freebsd14
+            vagrant_box_version: "2026.01.19"
+            vagrant_ssh_shell: "/bin/sh"
 
     env:
       VBOX_VERSION: "7.1.12"
