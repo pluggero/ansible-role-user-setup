@@ -47,7 +47,7 @@ jobs:
       matrix:
         include:
           - vagrant_box: alpinelinux323
-            vagrant_box_version: "2026.02.08"
+            vagrant_box_version: "2026.02.09"
             vagrant_ssh_shell: "/bin/bash"
           - vagrant_box: debian12
             vagrant_box_version: "2026.02.08"
