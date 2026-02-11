@@ -60,7 +60,7 @@ jobs:
             vagrant_ssh_shell: "/bin/sh"
 
     env:
-      VBOX_VERSION: "7.1.12"
+      VBOX_VERSION: "7.2.6"
       VBOX_DEB_DISTRO: "Ubuntu"
       VBOX_DEB_CODENAME: "noble"
 
