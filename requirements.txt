@@ -1,7 +1,7 @@
 # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
 passlib==1.7.4
 yamllint==1.38.0
-ansible==13.3.0
+ansible==13.4.0
 ansible-lint==26.1.1
 # Pinned molecule version to 25.1.0 because of https://github.com/ansible-community/molecule-plugins/issues/301
 molecule==25.1.0
