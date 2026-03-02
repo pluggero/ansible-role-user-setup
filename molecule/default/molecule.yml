@@ -7,7 +7,7 @@ driver:
 platforms:
   - name: instance
     box: "pluggero/${MOLECULE_DISTRO:-debian12}-ansible"
-    box_version: "${MOLECULE_VAGRANT_BOX_VERSION:-2026.02.22}"
+    box_version: "${MOLECULE_VAGRANT_BOX_VERSION:-2026.03.01}"
     config_options:
       ssh.shell: "${MOLECULE_SSH_SHELL:-/bin/bash}"
 provisioner:
