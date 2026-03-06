@@ -7,7 +7,7 @@
         state: directory
         mode: "755"
         owner: "{{ user.name }}"
-        group: "{{ user.name }}"
+        group: "{{ user_setup_root_group if (ansible_facts.getent_passwd[user.name][1] | int == 0) else user.name }}"
       become: true
       loop: "{{ user.user_directories }}"
       loop_control:
@@ -25,7 +25,7 @@
         state: touch
         mode: "600"
         owner: "{{ user.name }}"
-        group: "{{ user.name }}"
+        group: "{{ user_setup_root_group if (ansible_facts.getent_passwd[user.name][1] | int == 0) else user.name }}"
       become: true
       when: not user_setup_xdg_file.stat.exists
 

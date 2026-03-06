@@ -5,7 +5,7 @@
     state: directory
     mode: "700"
     owner: "{{ user.name }}"
-    group: "{{ user.name }}"
+    group: "{{ user_setup_root_group if (ansible_facts.getent_passwd[user.name][1] | int == 0) else user.name }}"
   become: true
 
 - name: Check if authorized_keys file exists
@@ -20,7 +20,7 @@
     state: touch
     mode: "600"
     owner: "{{ user.name }}"
-    group: "{{ user.name }}"
+    group: "{{ user_setup_root_group if (ansible_facts.getent_passwd[user.name][1] | int == 0) else user.name }}"
   become: true
   when: not user_setup_authorized_keys.stat.exists
 
@@ -52,7 +52,7 @@
         src: "{{ user_setup_temp_dir.path }}/authorized_keys"
         dest: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
         owner: "{{ user.name }}"
-        group: "{{ user.name }}"
+        group: "{{ user_setup_root_group if (ansible_facts.getent_passwd[user.name][1] | int == 0) else user.name }}"
         mode: "600"
         remote_src: true
       become: true

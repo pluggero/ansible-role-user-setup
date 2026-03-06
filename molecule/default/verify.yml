@@ -7,7 +7,7 @@
     - ../../vars/molecule_vars.yml
 
   vars:
-    role_path: "{{ playbook_dir }}/../.."  # noqa: var-naming[read-only]
+    role_path: "{{ playbook_dir }}/../.." # noqa: var-naming[read-only]
     ansible_user: ansible
     ansible_password: ansible
     ansible_become_password: ansible
@@ -32,6 +32,13 @@
       loop: "{{ user_setup_users }}"
       when: item.state | default('present') == 'present'
 
+    - name: Build UID and home directory lookup maps from passwd entries
+      ansible.builtin.set_fact:
+        user_setup_uid_map: "{{ user_setup_uid_map | default({}) | combine({item.item.name: item.ansible_facts.getent_passwd[item.item.name][1] | int}) }}"
+        user_setup_home_map: "{{ user_setup_home_map | default({}) | combine({item.item.name: item.ansible_facts.getent_passwd[item.item.name][4]}) }}"
+      loop: "{{ passwd_entry.results }}"
+      when: not item.skipped | default(false)
+
     - name: Assert user was created
       ansible.builtin.assert:
         that:
@@ -51,10 +58,12 @@
     - name: Assert user has correct UID
       ansible.builtin.assert:
         that:
-          - item.ansible_facts.getent_passwd[item.item.name][1] | int == item.item.uid | int
+          - user_setup_uid_map[item.item.name] == item.item.uid | int
         fail_msg: "User {{ item.item.name }} does not have correct UID"
       loop: "{{ passwd_entry.results }}"
-      when: not item.skipped | default(false)
+      when:
+        - not item.skipped | default(false)
+        - item.item.uid is defined
 
     - name: Assert user has correct home directory path in /etc/passwd
       ansible.builtin.assert:
@@ -62,7 +71,30 @@
           - item.ansible_facts.getent_passwd[item.item.name][4] == ('/nonexistent' if not (item.item.create_home | default(true)) else '/home/' + item.item.name)
         fail_msg: "User {{ item.item.name }} does not have correct home directory path in /etc/passwd"
       loop: "{{ passwd_entry.results }}"
-      when: not item.skipped | default(false)
+      when:
+        - not item.skipped | default(false)
+        - user_setup_uid_map[item.item.name] != 0
+
+    - name: Assert UID 0 user shell was changed
+      ansible.builtin.assert:
+        that:
+          - item.ansible_facts.getent_passwd[item.item.name][5] == item.item.shell
+        fail_msg: "UID 0 user {{ item.item.name }} shell was not changed to {{ item.item.shell }}"
+        success_msg: "UID 0 user {{ item.item.name }} shell correctly set to {{ item.item.shell }}"
+      loop: "{{ passwd_entry.results | rejectattr('skipped', 'defined') | list }}"
+      when:
+        - user_setup_uid_map[item.item.name] == 0
+        - item.item.shell is defined
+
+    - name: Assert UID 0 user home directory exists
+      ansible.builtin.assert:
+        that:
+          - item.ansible_facts.getent_passwd[item.item.name][4] is defined
+          - item.ansible_facts.getent_passwd[item.item.name][4] | length > 0
+        fail_msg: "UID 0 user {{ item.item.name }} home directory is not set"
+        success_msg: "UID 0 user {{ item.item.name }} home directory is {{ item.ansible_facts.getent_passwd[item.item.name][4] }}"
+      loop: "{{ passwd_entry.results | rejectattr('skipped', 'defined') | list }}"
+      when: user_setup_uid_map[item.item.name] == 0
 
     - name: Get group for each user
       ansible.builtin.getent:
@@ -70,7 +102,10 @@
         key: "{{ item.groups[0] }}"
       register: group_entry
       loop: "{{ user_setup_users }}"
-      when: item.state | default('present') == 'present'
+      when:
+        - item.state | default('present') == 'present'
+        - item.groups is defined
+        - item.groups | length > 0
 
     - name: Assert group exists and user is a member
       ansible.builtin.assert:
@@ -90,6 +125,7 @@
       when:
         - item.state | default('present') == 'present'
         - item.create_home | default(true)
+        - user_setup_uid_map[item.name] != 0
 
     - name: Assert home directory exists for users with create_home
       ansible.builtin.assert:
@@ -107,6 +143,7 @@
       when:
         - item.state | default('present') == 'present'
         - not (item.create_home | default(true))
+        - user_setup_uid_map[item.name] != 0
 
     - name: Assert home directory does not exist for users without create_home
       ansible.builtin.assert:
@@ -123,6 +160,7 @@
       when:
         - item.0.state | default('present') == 'present'
         - item.0.create_home | default(true)
+        - user_setup_uid_map[item.0.name] != 0
       become: true
 
     - name: Assert all expected directories exist
@@ -142,12 +180,50 @@
         - item.state | default('present') == 'present'
         - item.create_home | default(true)
         - item.env_var_setup | default(false)
+        - user_setup_uid_map[item.name] != 0
 
     - name: Assert env file exists for each user
       ansible.builtin.assert:
         that: item.stat.exists
         fail_msg: "Env file does not exist for user {{ item.item.name }}"
       loop: "{{ env_file_stat.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Check UID 0 user custom directories exist
+      ansible.builtin.stat:
+        path: "{{ user_setup_home_map[item.0.name] }}/{{ item.1.name }}"
+      register: user_setup_uid0_dirs
+      become: true
+      loop: "{{ user_setup_users | selectattr('user_directories', 'defined') | list | subelements('user_directories', skip_missing=True) }}"
+      when:
+        - item.0.state | default('present') == 'present'
+        - user_setup_uid_map[item.0.name] == 0
+
+    - name: Assert UID 0 user directories exist
+      ansible.builtin.assert:
+        that: item.stat.exists
+        fail_msg: "UID 0 user {{ item.item.0.name }} directory {{ item.item.1.name }} does not exist"
+        success_msg: "UID 0 user {{ item.item.0.name }} directory {{ item.item.1.name }} exists"
+      loop: "{{ user_setup_uid0_dirs.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Check UID 0 user env file exists
+      ansible.builtin.stat:
+        path: "{{ user_setup_home_map[item.name] }}/{{ item.env_var_file }}"
+      register: user_setup_uid0_env_files
+      become: true
+      loop: "{{ user_setup_users }}"
+      when:
+        - item.state | default('present') == 'present'
+        - user_setup_uid_map[item.name] == 0
+        - item.env_var_setup | default(false)
+
+    - name: Assert UID 0 user env file exists
+      ansible.builtin.assert:
+        that: item.stat.exists
+        fail_msg: "UID 0 user {{ item.item.name }} env file does not exist"
+        success_msg: "UID 0 user {{ item.item.name }} env file exists"
+      loop: "{{ user_setup_uid0_env_files.results }}"
       when: not item.skipped | default(false)
 
     - name: Check SSH authorized_keys file exists for each user
@@ -161,6 +237,7 @@
         - item.create_home | default(true)
         - item.ssh_authorized_keys is defined
         - item.ssh_authorized_keys | length > 0
+        - user_setup_uid_map[item.name] != 0
 
     - name: Assert SSH authorized_keys exists for each user
       ansible.builtin.assert:
@@ -180,6 +257,7 @@
         - item.create_home | default(true)
         - item.ssh_authorized_keys is defined
         - item.ssh_authorized_keys | length > 0
+        - user_setup_uid_map[item.name] != 0
 
     - name: Assert all SSH keys are present
       ansible.builtin.assert:
@@ -206,6 +284,53 @@
         - not item.skipped | default(false)
         - item.item.ssh_authorized_keys_exclusive | default(false)
 
+    - name: Check UID 0 user SSH authorized_keys file exists
+      ansible.builtin.stat:
+        path: "{{ user_setup_home_map[item.name] }}/{{ item.ssh_directory }}/authorized_keys"
+      register: user_setup_uid0_ssh_stat
+      become: true
+      loop: "{{ user_setup_users }}"
+      when:
+        - item.state | default('present') == 'present'
+        - user_setup_uid_map[item.name] == 0
+        - item.ssh_authorized_keys is defined
+        - item.ssh_authorized_keys | length > 0
+
+    - name: Assert UID 0 user SSH authorized_keys exists
+      ansible.builtin.assert:
+        that: item.stat.exists
+        fail_msg: "UID 0 user {{ item.item.name }} SSH authorized_keys file does not exist"
+        success_msg: "UID 0 user {{ item.item.name }} SSH authorized_keys file exists"
+      loop: "{{ user_setup_uid0_ssh_stat.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Read UID 0 user authorized_keys content
+      ansible.builtin.slurp:
+        path: "{{ user_setup_home_map[item.name] }}/{{ item.ssh_directory }}/authorized_keys"
+      register: user_setup_uid0_ssh_keys
+      become: true
+      loop: "{{ user_setup_users }}"
+      when:
+        - item.state | default('present') == 'present'
+        - user_setup_uid_map[item.name] == 0
+        - item.ssh_authorized_keys is defined
+        - item.ssh_authorized_keys | length > 0
+
+    - name: Assert UID 0 user SSH keys are present
+      ansible.builtin.assert:
+        that: item.1.key in (item.0.content | b64decode)
+        fail_msg: "UID 0 user {{ item.0.item.name }} SSH key not found in authorized_keys"
+        success_msg: "UID 0 user {{ item.0.item.name }} SSH key found in authorized_keys"
+      loop: "{{ user_setup_uid0_ssh_keys.results | rejectattr('skipped', 'defined') | list | subelements('item.ssh_authorized_keys') }}"
+
+    - name: Assert UID 0 user SSH key options are present
+      ansible.builtin.assert:
+        that: item.1.options | replace('\\', '') in (item.0.content | b64decode)
+        fail_msg: "UID 0 user {{ item.0.item.name }} SSH key options not correctly set"
+        success_msg: "UID 0 user {{ item.0.item.name }} SSH key options correctly set"
+      loop: "{{ user_setup_uid0_ssh_keys.results | rejectattr('skipped', 'defined') | list | subelements('item.ssh_authorized_keys') }}"
+      when: item.1.options is defined
+
     - name: Set password file path based on OS
       ansible.builtin.set_fact:
         password_file: "{{ '/etc/master.passwd' if ansible_os_family == 'FreeBSD' else '/etc/shadow' }}"
@@ -225,13 +350,34 @@
       loop: "{{ shadow_entry.results }}"
       when: not item.skipped | default(false)
 
+    - name: Read password entry for UID 0 users
+      ansible.builtin.command: grep "^{{ item.name }}:" {{ password_file }}
+      register: user_setup_uid0_shadow_entries
+      changed_when: false
+      become: true
+      loop: "{{ user_setup_users }}"
+      when:
+        - item.state | default('present') == 'present'
+        - user_setup_uid_map[item.name] == 0
+        - item.password is defined
+
+    - name: Assert UID 0 user password is hashed with sha512
+      ansible.builtin.assert:
+        that: item.stdout is search("^" ~ item.item.name ~ ":\\$6\\$")
+        fail_msg: "UID 0 user {{ item.item.name }} password is not hashed with sha512"
+        success_msg: "UID 0 user {{ item.item.name }} password correctly hashed with sha512"
+      loop: "{{ user_setup_uid0_shadow_entries.results }}"
+      when: not item.skipped | default(false)
+
     - name: Check sudoers file exists for users with sudo access
       ansible.builtin.stat:
         path: "{{ user_setup_sudoers_d_dir }}/{{ item.name }}"
       register: sudoers_file
       become: true
       loop: "{{ user_setup_users }}"
-      when: item.sudo_access | default(false)
+      when:
+        - item.sudo_access | default(false)
+        - user_setup_uid_map[item.name] != 0
 
     - name: Assert sudoers file exists for users with sudo
       ansible.builtin.assert:
@@ -260,7 +406,9 @@
       register: sudoers_content
       become: true
       loop: "{{ user_setup_users }}"
-      when: item.sudo_access | default(false)
+      when:
+        - item.sudo_access | default(false)
+        - user_setup_uid_map[item.name] != 0
 
     - name: Assert sudoers file contains NOPASSWD for users with sudo_nopasswd
       ansible.builtin.assert:
@@ -289,13 +437,34 @@
       register: no_sudoers_file
       become: true
       loop: "{{ user_setup_users }}"
-      when: not (item.sudo_access | default(false))
+      when:
+        - item.state | default('present') == 'present'
+        - not (item.sudo_access | default(false))
+        - user_setup_uid_map[item.name] != 0
 
     - name: Assert sudoers file does not exist for users without sudo
       ansible.builtin.assert:
         that: not item.stat.exists
         fail_msg: "Sudoers file should not exist for user {{ item.item.name }}"
       loop: "{{ no_sudoers_file.results }}"
+      when: not item.skipped | default(false)
+
+    - name: Check UID 0 user sudoers file does not exist
+      ansible.builtin.stat:
+        path: "{{ user_setup_sudoers_d_dir }}/{{ item.name }}"
+      register: user_setup_uid0_sudoers_files
+      become: true
+      loop: "{{ user_setup_users }}"
+      when:
+        - item.state | default('present') == 'present'
+        - user_setup_uid_map[item.name] == 0
+
+    - name: Assert UID 0 user sudoers file does not exist
+      ansible.builtin.assert:
+        that: not item.stat.exists
+        fail_msg: "UID 0 user {{ item.item.name }} sudoers file should not exist (UID 0 doesn't need sudo)"
+        success_msg: "UID 0 user {{ item.item.name }} sudoers file correctly not created"
+      loop: "{{ user_setup_uid0_sudoers_files.results }}"
       when: not item.skipped | default(false)
 
     - name: Assert absent users do not exist

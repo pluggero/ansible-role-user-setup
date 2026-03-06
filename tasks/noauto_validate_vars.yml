@@ -10,3 +10,34 @@
   loop_control:
     loop_var: user
   when: user_setup_users is defined and user_setup_users | length > 0
+
+- name: Set fact for root user detection
+  ansible.builtin.set_fact:
+    user_setup_root_users: "{{ user_setup_users | selectattr('name', 'equalto', 'root') | list + (user_setup_users | selectattr('uid', 'defined') | selectattr('uid', 'equalto', 0) | list) | unique }}"
+  when: user_setup_users is defined and user_setup_users | length > 0
+
+- name: Assert root user cannot be removed
+  ansible.builtin.assert:
+    that:
+      - user.state | default('present') != 'absent'
+    fail_msg: >-
+      Cannot set state: absent for root user (name: {{ user.name }}).
+      Root user removal is a destructive operation and is not permitted.
+    success_msg: "Root user state validation passed."
+  loop: "{{ user_setup_root_users | default([]) }}"
+  loop_control:
+    loop_var: user
+  when: user_setup_root_users is defined and user_setup_root_users | length > 0
+
+- name: Assert root user cannot have create_home false
+  ansible.builtin.assert:
+    that:
+      - user.create_home | default(true) != false
+    fail_msg: >-
+      Cannot set create_home: false for root user (name: {{ user.name }}).
+      Root home directory must exist. This is a destructive operation and is not permitted.
+    success_msg: "Root user create_home validation passed."
+  loop: "{{ user_setup_root_users | default([]) }}"
+  loop_control:
+    loop_var: user
+  when: user_setup_root_users is defined and user_setup_root_users | length > 0
