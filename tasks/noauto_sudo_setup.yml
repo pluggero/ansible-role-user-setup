@@ -7,10 +7,6 @@
   become: true
   when: ansible_os_family == "FreeBSD"
 
-- name: Set OS-specific root group
-  ansible.builtin.set_fact:
-    user_setup_root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else 'root' }}"
-
 - name: Set visudo path for OS family
   ansible.builtin.set_fact:
     user_setup_visudo_path: "{{ '/usr/local/sbin/visudo' if ansible_os_family == 'FreeBSD' else '/usr/sbin/visudo' }}"

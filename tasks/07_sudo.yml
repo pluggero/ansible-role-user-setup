@@ -8,6 +8,7 @@
   when:
     - user.state | default('present') == 'present'
     - user.sudo_access is defined and user.sudo_access
+    - ansible_facts.getent_passwd[user.name][1] | int != 0
 
 - name: Remove sudoers file for absent users
   ansible.builtin.file:

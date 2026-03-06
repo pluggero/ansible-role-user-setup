@@ -4,7 +4,7 @@
   hosts: all
 
   vars:
-    role_path: "{{ playbook_dir }}/../.."  # noqa: var-naming[read-only]
+    role_path: "{{ playbook_dir }}/../.." # noqa: var-naming[read-only]
     ansible_user: ansible
     ansible_password: ansible
     ansible_become_password: ansible
