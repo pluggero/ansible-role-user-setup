@@ -41,3 +41,8 @@ user_setup_users: []
 #   ssh_authorized_keys: []
 #     - key: "ssh-ed25519 AAAA... user@host"
 #       options: 'from="192.168.1.0/24",no-agent-forwarding'
+#
+# Root user example (do not set uid, groups, or groups_append):
+# - name: root
+#   shell: "/bin/bash"
+#   password: "{{ user_setup_root_password | password_hash('sha512', user_setup_root_password_salt) }}"

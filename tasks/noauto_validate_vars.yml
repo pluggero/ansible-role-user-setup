@@ -41,3 +41,42 @@
   loop_control:
     loop_var: user
   when: user_setup_root_users is defined and user_setup_root_users | length > 0
+
+- name: Assert root user cannot have uid parameter set
+  ansible.builtin.assert:
+    that:
+      - "'uid' not in user"
+    fail_msg: >-
+      Cannot set uid parameter for root user (name: {{ user.name }}).
+      Remove the 'uid' parameter from the root user configuration.
+    success_msg: "Root user uid parameter validation passed."
+  loop: "{{ user_setup_root_users | default([]) }}"
+  loop_control:
+    loop_var: user
+  when: user_setup_root_users is defined and user_setup_root_users | length > 0
+
+- name: Assert root user cannot have groups parameter set
+  ansible.builtin.assert:
+    that:
+      - "'groups' not in user"
+    fail_msg: >-
+      Cannot set groups parameter for root user (name: {{ user.name }}).
+      Remove the 'groups' parameter from the root user configuration (including empty lists).
+    success_msg: "Root user groups parameter validation passed."
+  loop: "{{ user_setup_root_users | default([]) }}"
+  loop_control:
+    loop_var: user
+  when: user_setup_root_users is defined and user_setup_root_users | length > 0
+
+- name: Assert root user cannot have groups_append parameter set
+  ansible.builtin.assert:
+    that:
+      - "'groups_append' not in user"
+    fail_msg: >-
+      Cannot set groups_append parameter for root user (name: {{ user.name }}).
+      Remove the 'groups_append' parameter from the root user configuration.
+    success_msg: "Root user groups_append parameter validation passed."
+  loop: "{{ user_setup_root_users | default([]) }}"
+  loop_control:
+    loop_var: user
+  when: user_setup_root_users is defined and user_setup_root_users | length > 0
