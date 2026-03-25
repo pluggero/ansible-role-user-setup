@@ -2,11 +2,17 @@
 
 [![CI](https://github.com/pluggero/ansible-role-user-setup/actions/workflows/ci.yml/badge.svg)](https://github.com/pluggero/ansible-role-user-setup/actions/workflows/ci.yml) [![Ansible Galaxy downloads](https://img.shields.io/ansible/role/d/pluggero/user_setup?label=Galaxy%20downloads&logo=ansible&color=%23096598)](https://galaxy.ansible.com/ui/standalone/roles/pluggero/user_setup)
 
-An Ansible Role that performs a basic user setup on different Linux distributions and FreeBSD.
+An Ansible Role that performs a basic user setup on different Linux distributions, FreeBSD, and Windows 11.
 
 ## Requirements
 
-None.
+For Windows hosts, the `ansible.windows` collection is required. Install it using:
+
+```bash
+ansible-galaxy collection install -r requirements.yml
+```
+
+For Unix/Linux hosts, no additional requirements.
 
 ## Role Variables
 
@@ -106,6 +112,17 @@ user_setup_users:
 
 - Users with `sudo_access: true` are automatically added to the `wheel` group (required for privilege escalation on FreeBSD).
 - The role uses `/usr/local/sbin/visudo` for sudoers file validation on FreeBSD (instead of `/usr/sbin/visudo`).
+
+**Windows-Specific Behavior:**
+
+- **User IDs (`uid`)**: Windows doesn't use UIDs (uses SIDs instead). The `uid` parameter is ignored on Windows hosts.
+- **Shells (`shell`)**: The `shell` parameter is not applicable on Windows. Users use PowerShell or cmd by default.
+- **Home Directories**: Windows user profiles are created at `C:\Users\[username]` by default. Set `create_home: false` to create a user account without a profile directory (useful for service accounts). When `create_home: false`, SSH keys and user directories cannot be managed.
+- **Environment Variables (`env_var_setup`)**: Not implemented for Windows. The `env_var_setup` and `env_var_file` parameters are ignored.
+- **SSH Keys**: SSH authorized_keys are managed at `C:\Users\[username]\.ssh\authorized_keys`. OpenSSH for Windows must be installed (not managed by this role).
+- **Privilege Escalation (`sudo_access`)**: Instead of sudo, users with `sudo_access: true` are added to the local `Administrators` group. The `sudo_nopasswd` parameter doesn't apply to Windows (UAC handles privilege elevation).
+- **Administrator User**: The Windows `Administrator` account is treated like the Unix `root` user and has the same protections (cannot be removed, cannot have groups modified).
+- **XDG Directories**: XDG user directories (`.config/user-dirs.dirs`) are not used on Windows. Only the directories specified in `user_directories` are created.
 
 ## Dependencies
 

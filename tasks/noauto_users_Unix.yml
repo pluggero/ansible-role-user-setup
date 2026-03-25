@@ -1,0 +1,20 @@
+---
+- name: Manage Unix users
+  ansible.builtin.user:
+    name: "{{ user.name }}"
+    state: "{{ user.state | default('present') }}"
+    remove: true
+    create_home: "{{ user.create_home | default(true) }}"
+    home: "{{ '/nonexistent' if not (user.create_home | default(true)) else omit }}"
+    uid: "{{ user.uid | default(omit) }}"
+    shell: "{{ user.shell | default(omit) }}"
+    groups: "{{ user.groups | default(omit) }}"
+    append: "{{ user.groups_append | default(omit) }}"
+  become: true
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+
+- name: Fetch Unix user and group information
+  ansible.builtin.getent:
+    database: passwd

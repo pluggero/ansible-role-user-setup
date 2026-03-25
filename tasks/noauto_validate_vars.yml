@@ -11,10 +11,21 @@
     loop_var: user
   when: user_setup_users is defined and user_setup_users | length > 0
 
-- name: Set fact for root user detection
+- name: Set fact for root/Administrator user detection (Windows)
+  ansible.builtin.set_fact:
+    user_setup_root_users: "{{ user_setup_users | selectattr('name', 'equalto', 'Administrator') | list }}"
+  when:
+    - ansible_os_family == 'Windows'
+    - user_setup_users is defined
+    - user_setup_users | length > 0
+
+- name: Set fact for root user detection (Unix)
   ansible.builtin.set_fact:
     user_setup_root_users: "{{ user_setup_users | selectattr('name', 'equalto', 'root') | list + (user_setup_users | selectattr('uid', 'defined') | selectattr('uid', 'equalto', 0) | list) | unique }}"
-  when: user_setup_users is defined and user_setup_users | length > 0
+  when:
+    - ansible_os_family != 'Windows'
+    - user_setup_users is defined
+    - user_setup_users | length > 0
 
 - name: Assert root user cannot be removed
   ansible.builtin.assert:

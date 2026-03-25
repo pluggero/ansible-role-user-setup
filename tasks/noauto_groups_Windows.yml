@@ -1,0 +1,11 @@
+---
+- name: Manage Windows groups
+  ansible.windows.win_group:
+    name: "{{ group.name }}"
+    state: "{{ group.state | default('present') }}"
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: SYSTEM
+  loop: "{{ user_setup_groups }}"
+  loop_control:
+    loop_var: group
