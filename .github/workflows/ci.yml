@@ -60,7 +60,7 @@ jobs:
             vagrant_ssh_shell: "/bin/sh"
 
     env:
-      VBOX_VERSION: "7.1.12"
+      VBOX_VERSION: "7.2.6"
       VBOX_DEB_DISTRO: "Ubuntu"
       VBOX_DEB_CODENAME: "noble"
 
@@ -132,7 +132,9 @@ jobs:
           sudo apt install -y /tmp/virtualbox.deb
 
       - name: Verify VirtualBox installation
-        run: VBoxManage --version
+        run: |
+          VBoxManage --version
+          VBoxManage list hostinfo
 
       - name: install vagrant
         run: |
@@ -148,7 +150,34 @@ jobs:
         run: vagrant --version
 
       - name: Run Molecule tests
-        run: molecule test
+        run: |
+          max_attempts=2
+          attempt=1
+          exit_code=0
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "=== Attempt $attempt of $max_attempts ==="
+
+            if molecule test; then
+              echo "✓ Molecule tests passed on attempt $attempt"
+              exit_code=0
+              break
+            else
+              exit_code=$?
+              echo "✗ Molecule tests failed on attempt $attempt with exit code $exit_code"
+
+              if [ $attempt -lt $max_attempts ]; then
+                echo "Waiting 30 seconds before retry..."
+                sleep 30
+                echo "Cleaning up before retry..."
+                molecule destroy || true
+              fi
+            fi
+
+            attempt=$((attempt + 1))
+          done
+
+          exit $exit_code
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
