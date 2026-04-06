@@ -1,0 +1,50 @@
+---
+user_setup_user: "testuser"
+user_setup_user2: "testuser2"
+user_setup_user3: "testuser3"
+user_setup_password: "TempSec!Pass#1"
+user_setup_password2: "TempPass2!#2"
+user_setup_password3: "TempPass3!#3"
+user_setup_groups:
+  - name: test
+    system: false
+  - name: developers
+    system: false
+  - name: removeme
+    system: false
+    state: absent
+user_setup_users:
+  - name: "{{ user_setup_user }}"
+    groups:
+      - test
+    groups_append: true
+    password: "{{ user_setup_password }}"
+    sudo_access: true
+    sudo_nopasswd: true
+    env_var_setup: false
+    ssh_directory: ".ssh"
+    ssh_authorized_keys_exclusive: true
+    ssh_authorized_keys:
+      - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBL3+59egObwwPuBKo1caTnovj6ZliOumpwMcpdL3NV7 user@hostname"
+  - name: "{{ user_setup_user2 }}"
+    groups:
+      - developers
+    groups_append: true
+    password: "{{ user_setup_password2 }}"
+    sudo_access: false
+    env_var_setup: false
+    ssh_directory: ".ssh"
+    ssh_authorized_keys_exclusive: false
+    ssh_authorized_keys:
+      - key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIN5GpP+W0Z3qM9qr8Jy9L4Zn5F2K1pO3qW5xR8tN4sQ2 testuser2@workstation"
+  - name: "{{ user_setup_user3 }}"
+    groups:
+      - developers
+    groups_append: true
+    password: "{{ user_setup_password3 }}"
+    sudo_access: true
+    sudo_nopasswd: false
+    env_var_setup: false
+    ssh_directory: ".ssh"
+  - name: removeduser
+    state: absent

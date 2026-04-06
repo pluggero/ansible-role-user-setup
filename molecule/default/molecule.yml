@@ -10,7 +10,27 @@ platforms:
     box_version: "${MOLECULE_VAGRANT_BOX_VERSION:-2026.04.26}"
     config_options:
       ssh.shell: "${MOLECULE_SSH_SHELL:-/bin/bash}"
+    instance_raw_config_args:
+      - "vm.guest = ${MOLECULE_VM_GUEST:-:linux}"
+      - "vm.communicator = ${MOLECULE_VM_COMMUNICATOR:-:ssh}"
+      - "ssh.insert_key = ${MOLECULE_SSH_INSERT_KEY:-true}"
+      - "vm.boot_timeout = ${MOLECULE_BOOT_TIMEOUT:-1200}"
+      - "ssh.connect_timeout = ${MOLECULE_SSH_CONNECT_TIMEOUT:-15}"
+      - "ssh.connect_retries = ${MOLECULE_SSH_CONNECT_RETRIES:-5}"
+      - "ssh.connect_retry_delay = ${MOLECULE_SSH_CONNECT_RETRY_DELAY:-2}"
+      - "vm.allow_hosts_modification = ${MOLECULE_ALLOW_HOSTS_MODIFICATION:-true}"
 provisioner:
   name: ansible
+  config_options:
+    defaults:
+      ssh_connection:
+        # SSH configuration
+        ssh_args: -o ControlMaster=no
   playbooks:
     converge: ${MOLECULE_PLAYBOOK:-converge.yml}
+  inventory:
+    host_vars:
+      instance:
+        ansible_connection: "${MOLECULE_ANSIBLE_CONNECTION:-ssh}"
+        ansible_shell_type: "${MOLECULE_ANSIBLE_SHELL_TYPE:-sh}"
+        ansible_python_interpreter: "${MOLECULE_PYTHON_INTERPRETER:-auto}"

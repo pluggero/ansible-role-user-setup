@@ -8,11 +8,16 @@
 
   vars:
     role_path: "{{ playbook_dir }}/../.." # noqa: var-naming[read-only]
-    ansible_user: ansible
-    ansible_password: ansible
-    ansible_become_password: ansible
+    ansible_user: vagrant
+    ansible_password: vagrant
+    ansible_become_password: vagrant
 
   tasks:
+    - name: Skip Windows verification (not yet implemented)
+      ansible.builtin.debug:
+        msg: "Windows verification tests are not yet implemented. Skipping verification for Windows."
+      when: ansible_os_family == 'Windows'
+
     - name: Include OS-specific variables
       ansible.builtin.include_vars: "{{ var_file }}"
       with_first_found:
@@ -20,9 +25,10 @@
         - "{{ role_path }}/vars/{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
         - "{{ role_path }}/vars/{{ ansible_distribution }}.yml"
         - "{{ role_path }}/vars/{{ ansible_os_family }}.yml"
-        - "{{ role_path }}/vars/{{ ansible_lsb.id }}.yml"
+        - "{{ role_path }}/vars/{{ ansible_lsb.id | default('') }}.yml"
       loop_control:
         loop_var: var_file
+      when: ansible_os_family != 'Windows'
 
     - name: Get passwd for user
       ansible.builtin.getent:
@@ -30,7 +36,9 @@
         key: "{{ item.name }}"
       register: passwd_entry
       loop: "{{ user_setup_users }}"
-      when: item.state | default('present') == 'present'
+      when:
+        - ansible_os_family != 'Windows'
+        - item.state | default('present') == 'present'
 
     - name: Build UID and home directory lookup maps from passwd entries
       ansible.builtin.set_fact:
@@ -103,6 +111,7 @@
       register: group_entry
       loop: "{{ user_setup_users }}"
       when:
+        - ansible_os_family != 'Windows'
         - item.state | default('present') == 'present'
         - item.groups is defined
         - item.groups | length > 0
@@ -334,6 +343,7 @@
     - name: Set password file path based on OS
       ansible.builtin.set_fact:
         password_file: "{{ '/etc/master.passwd' if ansible_os_family == 'FreeBSD' else '/etc/shadow' }}"
+      when: ansible_os_family != 'Windows'
 
     - name: Read password entry for each user
       ansible.builtin.command: grep "^{{ item.name }}:" {{ password_file }}
@@ -341,7 +351,9 @@
       changed_when: false
       become: true
       loop: "{{ user_setup_users }}"
-      when: item.state | default('present') == 'present'
+      when:
+        - ansible_os_family != 'Windows'
+        - item.state | default('present') == 'present'
 
     - name: Assert password is hashed with sha512 for each user
       ansible.builtin.assert:
@@ -357,6 +369,7 @@
       become: true
       loop: "{{ user_setup_users }}"
       when:
+        - ansible_os_family != 'Windows'
         - item.state | default('present') == 'present'
         - user_setup_uid_map[item.name] == 0
         - item.password is defined
@@ -376,6 +389,7 @@
       become: true
       loop: "{{ user_setup_users }}"
       when:
+        - ansible_os_family != 'Windows'
         - item.sudo_access | default(false)
         - user_setup_uid_map[item.name] != 0
 
@@ -389,6 +403,7 @@
     - name: Set expected root group based on OS
       ansible.builtin.set_fact:
         expected_root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else 'root' }}"
+      when: ansible_os_family != 'Windows'
 
     - name: Assert sudoers file has correct permissions
       ansible.builtin.assert:
@@ -407,6 +422,7 @@
       become: true
       loop: "{{ user_setup_users }}"
       when:
+        - ansible_os_family != 'Windows'
         - item.sudo_access | default(false)
         - user_setup_uid_map[item.name] != 0
 
@@ -438,6 +454,7 @@
       become: true
       loop: "{{ user_setup_users }}"
       when:
+        - ansible_os_family != 'Windows'
         - item.state | default('present') == 'present'
         - not (item.sudo_access | default(false))
         - user_setup_uid_map[item.name] != 0
@@ -456,6 +473,7 @@
       become: true
       loop: "{{ user_setup_users }}"
       when:
+        - ansible_os_family != 'Windows'
         - item.state | default('present') == 'present'
         - user_setup_uid_map[item.name] == 0
 
@@ -473,7 +491,9 @@
       failed_when: absent_user_check.rc == 0
       changed_when: false
       loop: "{{ user_setup_users }}"
-      when: item.state | default('present') == 'absent'
+      when:
+        - ansible_os_family != 'Windows'
+        - item.state | default('present') == 'absent'
 
     - name: Assert home directories do not exist for absent users
       ansible.builtin.stat:
@@ -496,7 +516,9 @@
       register: absent_user_sudoers
       become: true
       loop: "{{ user_setup_users }}"
-      when: item.state | default('present') == 'absent'
+      when:
+        - ansible_os_family != 'Windows'
+        - item.state | default('present') == 'absent'
 
     - name: Assert sudoers file was removed for absent users
       ansible.builtin.assert:
@@ -512,7 +534,9 @@
       register: absent_group_check
       failed_when: false
       loop: "{{ user_setup_groups }}"
-      when: item.state | default('present') == 'absent'
+      when:
+        - ansible_os_family != 'Windows'
+        - item.state | default('present') == 'absent'
 
     - name: Assert group was removed
       ansible.builtin.assert:
