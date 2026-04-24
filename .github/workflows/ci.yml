@@ -72,7 +72,6 @@ jobs:
             vagrant_memory: 4096
             vagrant_vm_communicator: ":none"
             vagrant_experimental: "none_communicator"
-            vagrant_playbook: converge_windows.yml
 
     env:
       VBOX_VERSION: "7.2.6"
@@ -200,7 +199,6 @@ jobs:
           MOLECULE_VAGRANT_BOX_VERSION: ${{ matrix.vagrant_box_version }}
           MOLECULE_SHELL: ${{ matrix.vagrant_shell }}
           MOLECULE_MEMORY: ${{ matrix.vagrant_memory }}
-          MOLECULE_PLAYBOOK: ${{ matrix.vagrant_playbook }}
           MOLECULE_VM_COMMUNICATOR: ${{ matrix.vagrant_vm_communicator }}
           VAGRANT_EXPERIMENTAL: ${{ matrix.vagrant_experimental }}
 
