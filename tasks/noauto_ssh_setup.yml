@@ -1,26 +1,26 @@
 ---
 - name: Ensure ssh directory exists
   ansible.builtin.file:
-    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}"
+    path: "{{ getent_passwd[user.name][4] }}/{{ user.ssh_directory }}"
     state: directory
     mode: "700"
     owner: "{{ user.name }}"
-    group: "{{ user_setup_root_group if (ansible_facts.getent_passwd[user.name][1] | int == 0) else user.name }}"
+    group: "{{ user_setup_root_group if (getent_passwd[user.name][1] | int == 0) else user.name }}"
   become: true
 
 - name: Check if authorized_keys file exists
   ansible.builtin.stat:
-    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
+    path: "{{ getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
   register: user_setup_authorized_keys
   become: true
 
 - name: Ensure authorized_keys file exists
   ansible.builtin.file:
-    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
+    path: "{{ getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
     state: touch
     mode: "600"
     owner: "{{ user.name }}"
-    group: "{{ user_setup_root_group if (ansible_facts.getent_passwd[user.name][1] | int == 0) else user.name }}"
+    group: "{{ user_setup_root_group if (getent_passwd[user.name][1] | int == 0) else user.name }}"
   become: true
   when: not user_setup_authorized_keys.stat.exists
 
@@ -50,9 +50,9 @@
     - name: Copy temp file to replace authorized_keys
       ansible.builtin.copy:
         src: "{{ user_setup_temp_dir.path }}/authorized_keys"
-        dest: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
+        dest: "{{ getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
         owner: "{{ user.name }}"
-        group: "{{ user_setup_root_group if (ansible_facts.getent_passwd[user.name][1] | int == 0) else user.name }}"
+        group: "{{ user_setup_root_group if (getent_passwd[user.name][1] | int == 0) else user.name }}"
         mode: "600"
         remote_src: true
       become: true
@@ -66,7 +66,7 @@
 
 - name: Ensure authorized_keys file is populated (non-exclusive mode)
   ansible.builtin.lineinfile:
-    path: "{{ ansible_facts.getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
+    path: "{{ getent_passwd[user.name][4] }}/{{ user.ssh_directory }}/authorized_keys"
     line: "{{ (key_entry.options | default('') ~ ' ' if key_entry.options is defined else '') ~ key_entry.key }}"
   become: true
   loop: "{{ user.ssh_authorized_keys }}"

@@ -19,4 +19,4 @@
     label: "{{ user.name }}"
   when:
     - ansible_os_family != 'Windows'
-    - ((user.sudo_access is defined and user.sudo_access) and (ansible_facts.getent_passwd[user.name][1] | int != 0)) or (user.state | default('present') == 'absent')
+    - ((user.sudo_access is defined and user.sudo_access) and (getent_passwd[user.name][1] | int != 0)) or (user.state | default('present') == 'absent')

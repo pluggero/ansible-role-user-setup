@@ -36,7 +36,7 @@ user_setup_users:
     create_home: true
     groups: []
     groups_append: true
-    password: "{{ user_setup_example_password | password_hash('sha512', user_setup_example_password_salt) }}"
+    password: "{{ user_setup_example_password }}"
     sudo_access: true
     sudo_nopasswd: false
     env_var_setup: true
@@ -69,7 +69,8 @@ user_setup_users:
 ```
 
 The users to create can be defined in the variable `user_setup_users`.
-In the example above the `user_setup_example_password` and `user_setup_example_password_salt` should be stored securely in a vault.
+In the example above `user_setup_example_password` should be stored securely in a vault.
+On Linux, an optional `password_salt` field can be added per user to produce a deterministic password hash across runs (useful for idempotency checks).
 
 **User State Management:**
 

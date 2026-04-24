@@ -6,7 +6,6 @@
   ansible.windows.win_user:
     name: "{{ user.name }}"
     state: "{{ user.state | default('present') }}"
-    password: "{{ user.password | default(omit) }}"
     groups: "{{ user.groups | default(omit) }}"
     groups_action: "{{ 'add' if user.groups_append | default(false) else 'replace' }}"
     account_disabled: no

@@ -88,6 +88,8 @@
     rights: FullControl
     type: allow
     state: present
+    inherit: None
+    propagation: None
   become: true
   become_method: ansible.builtin.runas
   become_user: SYSTEM
@@ -99,6 +101,8 @@
     rights: FullControl
     type: allow
     state: present
+    inherit: None
+    propagation: None
   become: true
   become_method: ansible.builtin.runas
   become_user: SYSTEM
@@ -110,6 +114,8 @@
     rights: FullControl
     type: allow
     state: present
+    inherit: None
+    propagation: None
   become: true
   become_method: ansible.builtin.runas
   become_user: SYSTEM
