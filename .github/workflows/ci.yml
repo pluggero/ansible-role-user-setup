@@ -47,60 +47,32 @@ jobs:
       matrix:
         include:
           - vagrant_box: alpinelinux323
-            vagrant_box_version: "2026.04.26"
-            vagrant_ssh_shell: "/bin/bash"
-            vagrant_vm_guest: ":linux"
-            vagrant_ssh_insert_key: "true"
-            vagrant_memory: "512"
-            vagrant_ansible_shell_type: "sh"
-            vagrant_python_interpreter: "auto"
-            vagrant_molecule_playbook: "converge.yml"
-            vagrant_boot_timeout: "600"
+            vagrant_box_version: "2026.03.22"
+            vagrant_shell: "/bin/bash"
+            vagrant_memory: 4096
           - vagrant_box: debian12
-            vagrant_box_version: "2026.04.26"
-            vagrant_ssh_shell: "/bin/bash"
-            vagrant_vm_guest: ":linux"
-            vagrant_ssh_insert_key: "true"
-            vagrant_memory: "512"
-            vagrant_ansible_shell_type: "sh"
-            vagrant_python_interpreter: "auto"
-            vagrant_molecule_playbook: "converge.yml"
-            vagrant_boot_timeout: "600"
+            vagrant_box_version: "2026.03.22"
+            vagrant_shell: "/bin/bash"
+            vagrant_memory: 4096
           - vagrant_box: archlinux
-            vagrant_box_version: "2026.04.26"
-            vagrant_ssh_shell: "/bin/bash"
-            vagrant_vm_guest: ":linux"
-            vagrant_ssh_insert_key: "true"
-            vagrant_memory: "512"
-            vagrant_ansible_shell_type: "sh"
-            vagrant_python_interpreter: "auto"
-            vagrant_molecule_playbook: "converge.yml"
-            vagrant_boot_timeout: "600"
+            vagrant_box_version: "2026.03.22"
+            vagrant_shell: "/bin/bash"
+            vagrant_memory: 4096
           - vagrant_box: freebsd14
-            vagrant_box_version: "2026.04.26"
-            vagrant_ssh_shell: "/bin/sh"
-            vagrant_vm_guest: ":freebsd"
-            vagrant_ssh_insert_key: "true"
-            vagrant_memory: "512"
-            vagrant_ansible_shell_type: "sh"
-            vagrant_python_interpreter: "auto"
-            vagrant_molecule_playbook: "converge.yml"
-            vagrant_boot_timeout: "600"
+            vagrant_box_version: "2026.03.22"
+            vagrant_shell: "/bin/sh"
+            vagrant_memory: 4096
+          # Windows: vagrant_experimental=none_communicator disables the winssh communicator
+          # of vagrant (which only checks SSH once at boot and does not wait for full system startup).
+          # vm.communicator=:none and the custom wait_for in create.yml handle
+          # SSH readiness polling instead.
           - vagrant_box: windows11
             vagrant_box_version: "2026.04.06"
-            vagrant_ssh_shell: "powershell"
-            vagrant_vm_guest: ":windows"
-            vagrant_vm_communicator: ":winssh"
-            vagrant_ssh_insert_key: "false"
-            vagrant_memory: "4096"
-            vagrant_ansible_shell_type: "powershell"
-            vagrant_python_interpreter: "C:/Python/Python3142/python.exe"
-            vagrant_molecule_playbook: "converge_windows.yml"
-            vagrant_boot_timeout: "300"
-            vagrant_ssh_connect_timeout: "30"
-            vagrant_ssh_connect_retries: "150"
-            vagrant_ssh_connect_retry_delay: "4"
-            vagrant_allow_hosts_modification: "false"
+            vagrant_shell: "powershell"
+            vagrant_memory: 4096
+            vagrant_vm_communicator: ":none"
+            vagrant_experimental: "none_communicator"
+            vagrant_playbook: converge_windows.yml
 
     env:
       VBOX_VERSION: "7.2.6"
@@ -226,19 +198,11 @@ jobs:
           ANSIBLE_FORCE_COLOR: "1"
           MOLECULE_DISTRO: ${{ matrix.vagrant_box }}
           MOLECULE_VAGRANT_BOX_VERSION: ${{ matrix.vagrant_box_version }}
-          MOLECULE_SSH_SHELL: ${{ matrix.vagrant_ssh_shell }}
-          MOLECULE_VM_GUEST: ${{ matrix.vagrant_vm_guest }}
-          MOLECULE_SSH_INSERT_KEY: ${{ matrix.vagrant_ssh_insert_key }}
+          MOLECULE_SHELL: ${{ matrix.vagrant_shell }}
           MOLECULE_MEMORY: ${{ matrix.vagrant_memory }}
-          MOLECULE_ANSIBLE_SHELL_TYPE: ${{ matrix.vagrant_ansible_shell_type }}
-          MOLECULE_PYTHON_INTERPRETER: ${{ matrix.vagrant_python_interpreter }}
-          MOLECULE_PLAYBOOK: ${{ matrix.vagrant_molecule_playbook }}
-          MOLECULE_BOOT_TIMEOUT: ${{ matrix.vagrant_boot_timeout }}
-          MOLECULE_SSH_CONNECT_TIMEOUT: ${{ matrix.vagrant_ssh_connect_timeout || '15' }}
-          MOLECULE_SSH_CONNECT_RETRIES: ${{ matrix.vagrant_ssh_connect_retries || '5' }}
-          MOLECULE_SSH_CONNECT_RETRY_DELAY: ${{ matrix.vagrant_ssh_connect_retry_delay || '2' }}
-          MOLECULE_ALLOW_HOSTS_MODIFICATION: ${{ matrix.vagrant_allow_hosts_modification || 'true' }}
-          MOLECULE_VM_COMMUNICATOR: ${{ matrix.vagrant_vm_communicator || ':ssh' }}
+          MOLECULE_PLAYBOOK: ${{ matrix.vagrant_playbook }}
+          MOLECULE_VM_COMMUNICATOR: ${{ matrix.vagrant_vm_communicator }}
+          VAGRANT_EXPERIMENTAL: ${{ matrix.vagrant_experimental }}
 
   status-check:
     name: Status Check
