@@ -18,7 +18,7 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  no_log: "{{ user.password is defined }}"
+    label: "{{ user.name }}"
 
 - name: Gather Windows user information
   ansible.builtin.include_tasks:
@@ -34,6 +34,7 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
+    label: "{{ user.name }}"
   when:
     - user.state | default('present') == 'present'
     - user.create_home | default(true)

@@ -5,6 +5,7 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
+    label: "{{ user.name }}"
   when:
     - ansible_os_family == 'Windows'
     - (user.sudo_access is defined and user.sudo_access) or (user.state | default('present') == 'absent')
@@ -15,6 +16,7 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
+    label: "{{ user.name }}"
   when:
     - ansible_os_family != 'Windows'
     - ((user.sudo_access is defined and user.sudo_access) and (ansible_facts.getent_passwd[user.name][1] | int != 0)) or (user.state | default('present') == 'absent')

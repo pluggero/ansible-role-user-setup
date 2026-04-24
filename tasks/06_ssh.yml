@@ -5,6 +5,7 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
+    label: "{{ user.name }}"
   when:
     - ansible_os_family == 'Windows'
     - user.ssh_authorized_keys is defined
@@ -18,6 +19,7 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
+    label: "{{ user.name }}"
   when:
     - ansible_os_family != 'Windows'
     - user.ssh_authorized_keys is defined
