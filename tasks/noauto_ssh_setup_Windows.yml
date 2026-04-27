@@ -72,53 +72,56 @@
   become_user: SYSTEM
   when: not user_setup_authorized_keys.stat.exists
 
-- name: Remove inheritance on authorized_keys file (without reorganizing)
-  ansible.windows.win_acl_inheritance:
-    path: "{{ getent_passwd[user.name][5] }}\\{{ user.ssh_directory }}\\authorized_keys"
-    state: absent
-    reorganize: false
-  become: true
-  become_method: ansible.builtin.runas
-  become_user: SYSTEM
+- name: Set ACLs on authorized_keys file
+  when: not user_setup_authorized_keys.stat.exists
+  block:
+    - name: Remove inheritance on authorized_keys file (without reorganizing)
+      ansible.windows.win_acl_inheritance:
+        path: "{{ getent_passwd[user.name][5] }}\\{{ user.ssh_directory }}\\authorized_keys"
+        state: absent
+        reorganize: false
+      become: true
+      become_method: ansible.builtin.runas
+      become_user: SYSTEM
 
-- name: Grant FullControl to user on authorized_keys
-  ansible.windows.win_acl:
-    path: "{{ getent_passwd[user.name][5] }}\\{{ user.ssh_directory }}\\authorized_keys"
-    user: "{{ user.name }}"
-    rights: FullControl
-    type: allow
-    state: present
-    inherit: None
-    propagation: None
-  become: true
-  become_method: ansible.builtin.runas
-  become_user: SYSTEM
+    - name: Grant FullControl to user on authorized_keys
+      ansible.windows.win_acl:
+        path: "{{ getent_passwd[user.name][5] }}\\{{ user.ssh_directory }}\\authorized_keys"
+        user: "{{ user.name }}"
+        rights: FullControl
+        type: allow
+        state: present
+        inherit: None
+        propagation: None
+      become: true
+      become_method: ansible.builtin.runas
+      become_user: SYSTEM
 
-- name: Grant FullControl to SYSTEM on authorized_keys
-  ansible.windows.win_acl:
-    path: "{{ getent_passwd[user.name][5] }}\\{{ user.ssh_directory }}\\authorized_keys"
-    user: NT AUTHORITY\SYSTEM
-    rights: FullControl
-    type: allow
-    state: present
-    inherit: None
-    propagation: None
-  become: true
-  become_method: ansible.builtin.runas
-  become_user: SYSTEM
+    - name: Grant FullControl to SYSTEM on authorized_keys
+      ansible.windows.win_acl:
+        path: "{{ getent_passwd[user.name][5] }}\\{{ user.ssh_directory }}\\authorized_keys"
+        user: NT AUTHORITY\SYSTEM
+        rights: FullControl
+        type: allow
+        state: present
+        inherit: None
+        propagation: None
+      become: true
+      become_method: ansible.builtin.runas
+      become_user: SYSTEM
 
-- name: Grant FullControl to Administrators on authorized_keys
-  ansible.windows.win_acl:
-    path: "{{ getent_passwd[user.name][5] }}\\{{ user.ssh_directory }}\\authorized_keys"
-    user: BUILTIN\Administrators
-    rights: FullControl
-    type: allow
-    state: present
-    inherit: None
-    propagation: None
-  become: true
-  become_method: ansible.builtin.runas
-  become_user: SYSTEM
+    - name: Grant FullControl to Administrators on authorized_keys
+      ansible.windows.win_acl:
+        path: "{{ getent_passwd[user.name][5] }}\\{{ user.ssh_directory }}\\authorized_keys"
+        user: BUILTIN\Administrators
+        rights: FullControl
+        type: allow
+        state: present
+        inherit: None
+        propagation: None
+      become: true
+      become_method: ansible.builtin.runas
+      become_user: SYSTEM
 
 - name: Manage authorized_keys in exclusive mode
   when: user.ssh_authorized_keys_exclusive | default(false)
