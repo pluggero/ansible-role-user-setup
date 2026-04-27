@@ -1,0 +1,4 @@
+---
+- name: Windows dependencies check
+  ansible.builtin.debug:
+    msg: "No additional dependencies required for Windows hosts"

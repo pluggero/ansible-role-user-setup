@@ -5,7 +5,9 @@
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
+    label: "{{ user.name }}"
   when:
+    - ansible_os_family != 'Windows'
     - user.env_var_setup | default(false)
     - user.state | default('present') == 'present'
     - user.create_home | default(true)

@@ -1,21 +1,22 @@
 ---
-- name: Manage sudo access
+- name: Manage admin access (Windows)
   ansible.builtin.include_tasks:
-    file: noauto_sudo_setup.yml
+    file: noauto_sudo_setup_Windows.yml
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
+    label: "{{ user.name }}"
   when:
-    - user.state | default('present') == 'present'
-    - user.sudo_access is defined and user.sudo_access
-    - ansible_facts.getent_passwd[user.name][1] | int != 0
+    - ansible_os_family == 'Windows'
+    - (user.sudo_access is defined and user.sudo_access) or (user.state | default('present') == 'absent')
 
-- name: Remove sudoers file for absent users
-  ansible.builtin.file:
-    path: "{{ user_setup_sudoers_d_dir }}/{{ user.name }}"
-    state: absent
-  become: true
+- name: Manage sudo access (Unix)
+  ansible.builtin.include_tasks:
+    file: noauto_sudo_setup_Unix.yml
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
-  when: user.state | default('present') == 'absent'
+    label: "{{ user.name }}"
+  when:
+    - ansible_os_family != 'Windows'
+    - ((user.sudo_access is defined and user.sudo_access) and (getent_passwd[user.name][1] | int != 0)) or (user.state | default('present') == 'absent')

@@ -1,0 +1,54 @@
+---
+# Windows user management orchestrator
+# Creates users, initializes profiles via win_user_profile, and maintains getent_passwd fact
+
+- name: Manage Windows users
+  ansible.windows.win_user:
+    name: "{{ user.name }}"
+    state: "{{ user.state | default('present') }}"
+    groups: "{{ user.groups | default(omit) }}"
+    groups_action: "{{ 'add' if user.groups_append | default(false) else 'replace' }}"
+    account_disabled: no
+    user_cannot_change_password: no
+    password_never_expires: no
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: SYSTEM
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+    label: "{{ user.name }}"
+
+- name: Gather Windows user information
+  ansible.builtin.include_tasks:
+    file: noauto_windows_gather_info.yml
+
+- name: Initialize Windows user profile
+  ansible.windows.win_user_profile:
+    username: "{{ user.name }}"
+    state: present
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: SYSTEM
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+    label: "{{ user.name }}"
+  when:
+    - user.state | default('present') == 'present'
+    - user.create_home | default(true)
+  register: user_setup_profile_result
+
+- name: Display profile initialization status
+  ansible.builtin.debug:
+    msg: "User profile for {{ item.user.name }}: {{ 'created' if item.changed else 'already exists' }}"
+  loop: "{{ user_setup_profile_result.results }}"
+  loop_control:
+    loop_var: item
+    label: "{{ item.user.name }}"
+  when:
+    - not item.skipped | default(false)
+
+- name: Re-gather Windows user information after profile initialization
+  ansible.builtin.include_tasks:
+    file: noauto_windows_gather_info.yml

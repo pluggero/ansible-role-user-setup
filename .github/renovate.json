@@ -52,8 +52,8 @@
         "/^molecule/default/molecule\\.yml$/"
       ],
       "matchStrings": [
-        "vagrant_box:\\s+debian12\\s+vagrant_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\"",
-        "box_version:\\s+\"\\$\\{MOLECULE_VAGRANT_BOX_VERSION:-(?<currentValue>[\\d\\.]+)\\}\""
+        "molecule_distro:\\s+debian12\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\"",
+        "box_version:\\s+\"\\$\\{MOLECULE_BOX_VERSION:-(?<currentValue>[\\d\\.]+)\\}\""
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "pluggero/vagrant-debian12-ansible",
@@ -65,7 +65,7 @@
         "/^.github/workflows/ci\\.yml$/"
       ],
       "matchStrings": [
-        "vagrant_box:\\s+archlinux\\s+vagrant_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+        "molecule_distro:\\s+archlinux\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "pluggero/vagrant-archlinux-ansible",
@@ -77,7 +77,7 @@
         "/^.github/workflows/ci\\.yml$/"
       ],
       "matchStrings": [
-        "vagrant_box:\\s+alpinelinux323\\s+vagrant_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+        "molecule_distro:\\s+alpinelinux323\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "pluggero/vagrant-alpinelinux323-ansible",
@@ -89,7 +89,7 @@
         "/^.github/workflows/ci\\.yml$/"
       ],
       "matchStrings": [
-        "vagrant_box:\\s+freebsd14\\s+vagrant_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+        "molecule_distro:\\s+freebsd14\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "pluggero/vagrant-freebsd14-ansible",

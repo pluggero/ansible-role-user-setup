@@ -1,0 +1,18 @@
+---
+# Windows doesn't have sudo - we add users to Administrators group instead
+# Note: sudo_nopasswd parameter doesn't apply to Windows (UAC handles this)
+# Note: removal from Administrators group on user deletion is handled automatically
+#       by Windows when the user account is removed via win_user (task 03_users)
+
+- name: Add user to Administrators group
+  ansible.windows.win_group_membership:
+    name: "{{ user_setup_root_group }}"
+    members:
+      - "{{ user.name }}"
+    state: present
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: SYSTEM
+  when:
+    - user.state | default('present') == 'present'
+    - user.sudo_access is defined and user.sudo_access

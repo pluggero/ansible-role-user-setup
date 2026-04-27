@@ -1,11 +1,27 @@
 ---
-- name: Manage ssh setup
+- name: Manage ssh setup (Windows)
   ansible.builtin.include_tasks:
-    file: noauto_ssh_setup.yml
+    file: noauto_ssh_setup_Windows.yml
   loop: "{{ user_setup_users }}"
   loop_control:
     loop_var: user
+    label: "{{ user.name }}"
   when:
+    - ansible_os_family == 'Windows'
+    - user.ssh_authorized_keys is defined
+    - user.ssh_authorized_keys | length > 0
+    - user.state | default('present') == 'present'
+    - user.create_home | default(true)
+
+- name: Manage ssh setup (Unix)
+  ansible.builtin.include_tasks:
+    file: noauto_ssh_setup_Unix.yml
+  loop: "{{ user_setup_users }}"
+  loop_control:
+    loop_var: user
+    label: "{{ user.name }}"
+  when:
+    - ansible_os_family != 'Windows'
     - user.ssh_authorized_keys is defined
     - user.ssh_authorized_keys | length > 0
     - user.state | default('present') == 'present'

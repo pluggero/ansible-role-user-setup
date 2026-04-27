@@ -7,10 +7,33 @@ driver:
 platforms:
   - name: instance
     box: "pluggero/${MOLECULE_DISTRO:-debian12}-ansible"
-    box_version: "${MOLECULE_VAGRANT_BOX_VERSION:-2026.04.26}"
+    box_version: "${MOLECULE_BOX_VERSION:-2026.04.26}"
+    memory: ${MOLECULE_MEMORY:-4096}
     config_options:
-      ssh.shell: "${MOLECULE_SSH_SHELL:-/bin/bash}"
+      ssh.shell: "${MOLECULE_SHELL:-/bin/bash}"
+    instance_raw_config_args:
+      # Windows: set communicator=:none and VAGRANT_EXPERIMENTAL=none_communicator
+      # because the winssh communicator of vagrant only checks the connection once on startup
+      # and does not wait for the system to fully boot. With :none, create.yml uses wait_for
+      # to poll for OpenSSH readiness instead.
+      - "vm.communicator = ${MOLECULE_VM_COMMUNICATOR:-:ssh}"
 provisioner:
   name: ansible
   playbooks:
-    converge: ${MOLECULE_PLAYBOOK:-converge.yml}
+    converge: converge.yml
+  inventory:
+    host_vars:
+      instance:
+        ansible_shell_type: >-
+          {%- set shell = lookup('env', 'MOLECULE_SHELL') | default('/bin/bash') -%}
+          {%- if shell == 'powershell' -%}
+          powershell
+          {%- else -%}
+          sh
+          {%- endif -%}
+        # Windows Vagrant boxes use the 'vagrant' user (a local administrator) because the
+        # 'ansible' user is low-privileged and cannot perform the required operations.
+        # Unix boxes use 'ansible' (which is also low-privileged) but it has sudo permissions.
+        ansible_user: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"
+        ansible_password: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"
+        ansible_become_password: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"
