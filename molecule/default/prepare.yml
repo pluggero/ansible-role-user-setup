@@ -14,14 +14,9 @@
         - "{{ role_path }}/vars/{{ ansible_os_family }}-{{ ansible_distribution_major_version }}.yml"
         - "{{ role_path }}/vars/{{ ansible_distribution }}.yml"
         - "{{ role_path }}/vars/{{ ansible_os_family }}.yml"
-        - "{{ role_path }}/vars/{{ ansible_lsb.id | default('') }}.yml"
+        - "{{ role_path }}/vars/{{ ansible_lsb.id }}.yml"
       loop_control:
         loop_var: var_file
-      when: ansible_os_family != 'Windows'
-
-    - name: Include Windows-specific variables
-      ansible.builtin.include_vars: "{{ role_path }}/vars/Windows.yml"
-      when: ansible_os_family == 'Windows'
 
     - name: Create group to be removed (Unix)
       ansible.builtin.group:
@@ -52,15 +47,6 @@
         state: present
         password: "TempPassword123!"
       when: ansible_os_family == 'Windows'
-
-    - name: Set OS-specific root group
-      ansible.builtin.set_fact:
-        user_setup_root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else ('Administrators' if ansible_os_family == 'Windows' else 'root') }}"
-
-    - name: Set visudo path for OS family
-      ansible.builtin.set_fact:
-        user_setup_visudo_path: "{{ '/usr/local/sbin/visudo' if ansible_os_family == 'FreeBSD' else '/usr/sbin/visudo' }}"
-      when: ansible_os_family != 'Windows'
 
     - name: Ensure sudoers.d directory exists
       ansible.builtin.file:

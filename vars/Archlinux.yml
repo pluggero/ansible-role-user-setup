@@ -7,3 +7,4 @@ user_setup_sudoers_file: /etc/sudoers
 user_setup_sudoers_d_dir: /etc/sudoers.d
 
 user_setup_root_group: "root"
+user_setup_visudo_path: /usr/sbin/visudo
