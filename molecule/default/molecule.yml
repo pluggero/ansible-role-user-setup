@@ -31,3 +31,9 @@ provisioner:
           {%- else -%}
           sh
           {%- endif -%}
+        # Windows Vagrant boxes use the 'vagrant' user (a local administrator) because the
+        # 'ansible' user is low-privileged and cannot perform the required operations.
+        # Unix boxes use 'ansible' (which is also low-privileged) but it has sudo permissions.
+        ansible_user: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"
+        ansible_password: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"
+        ansible_become_password: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"

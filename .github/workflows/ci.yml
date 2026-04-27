@@ -47,18 +47,22 @@ jobs:
       matrix:
         include:
           - vagrant_box: alpinelinux323
+            vagrant_os_family: "unix"
             vagrant_box_version: "2026.03.22"
             vagrant_shell: "/bin/bash"
             vagrant_memory: 4096
           - vagrant_box: debian12
+            vagrant_os_family: "unix"
             vagrant_box_version: "2026.03.22"
             vagrant_shell: "/bin/bash"
             vagrant_memory: 4096
           - vagrant_box: archlinux
+            vagrant_os_family: "unix"
             vagrant_box_version: "2026.03.22"
             vagrant_shell: "/bin/bash"
             vagrant_memory: 4096
           - vagrant_box: freebsd14
+            vagrant_os_family: "unix"
             vagrant_box_version: "2026.03.22"
             vagrant_shell: "/bin/sh"
             vagrant_memory: 4096
@@ -67,6 +71,7 @@ jobs:
           # vm.communicator=:none and the custom wait_for in create.yml handle
           # SSH readiness polling instead.
           - vagrant_box: windows11
+            vagrant_os_family: "windows"
             vagrant_box_version: "2026.04.06"
             vagrant_shell: "powershell"
             vagrant_memory: 4096
@@ -201,6 +206,7 @@ jobs:
           MOLECULE_MEMORY: ${{ matrix.vagrant_memory }}
           MOLECULE_VM_COMMUNICATOR: ${{ matrix.vagrant_vm_communicator }}
           VAGRANT_EXPERIMENTAL: ${{ matrix.vagrant_experimental }}
+          MOLECULE_OS_FAMILY: ${{ matrix.vagrant_os_family }}
 
   status-check:
     name: Status Check

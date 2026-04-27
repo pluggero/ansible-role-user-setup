@@ -5,9 +5,6 @@
 
   vars:
     role_path: "{{ playbook_dir }}/../.." # noqa: var-naming[read-only]
-    ansible_user: vagrant
-    ansible_password: vagrant
-    ansible_become_password: vagrant
 
   tasks:
     - name: Include OS-specific variables
