@@ -48,22 +48,22 @@ jobs:
         include:
           - molecule_distro: alpinelinux323
             molecule_os_family: "unix"
-            molecule_box_version: "2026.03.22"
+            molecule_box_version: "2026.04.26"
             molecule_shell: "/bin/bash"
             molecule_memory: 4096
           - molecule_distro: debian12
             molecule_os_family: "unix"
-            molecule_box_version: "2026.03.22"
+            molecule_box_version: "2026.04.26"
             molecule_shell: "/bin/bash"
             molecule_memory: 4096
           - molecule_distro: archlinux
             molecule_os_family: "unix"
-            molecule_box_version: "2026.03.22"
+            molecule_box_version: "2026.04.26"
             molecule_shell: "/bin/bash"
             molecule_memory: 4096
           - molecule_distro: freebsd14
             molecule_os_family: "unix"
-            molecule_box_version: "2026.03.22"
+            molecule_box_version: "2026.04.26"
             molecule_shell: "/bin/sh"
             molecule_memory: 4096
           # Windows: vagrant_experimental=none_communicator disables the winssh communicator
