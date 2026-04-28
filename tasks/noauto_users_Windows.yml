@@ -1,7 +1,4 @@
 ---
-# Windows user management orchestrator
-# Creates users, initializes profiles via win_user_profile, and maintains getent_passwd fact
-
 - name: Manage Windows users
   ansible.windows.win_user:
     name: "{{ user.name }}"
