@@ -5,3 +5,6 @@ user_setup_dep_pkgs:
 
 user_setup_sudoers_file: /usr/local/etc/sudoers
 user_setup_sudoers_d_dir: /usr/local/etc/sudoers.d
+
+user_setup_root_group: "wheel"
+user_setup_visudo_path: /usr/local/sbin/visudo

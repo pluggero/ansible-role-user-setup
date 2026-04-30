@@ -2,81 +2,68 @@
 - name: Assert that required information for user creation are available
   ansible.builtin.assert:
     that:
-      - user.name is defined and user.name != ''
+      - user_setup_users | selectattr('name', 'defined') | selectattr('name', 'ne', '') | list | length == user_setup_users | length
     fail_msg: >-
       The username for user creation is a required argument and should not be empty.
-    success_msg: "All required arguments available for user creation."
-  loop: "{{ user_setup_users }}"
-  loop_control:
-    loop_var: user
   when: user_setup_users is defined and user_setup_users | length > 0
 
-- name: Set fact for root user detection
+- name: Set fact for root/Administrator user detection (Windows)
+  ansible.builtin.set_fact:
+    user_setup_root_users: "{{ user_setup_users | selectattr('name', 'equalto', 'Administrator') | list }}"
+  when:
+    - ansible_os_family == 'Windows'
+    - user_setup_users is defined
+    - user_setup_users | length > 0
+
+- name: Set fact for root user detection (Unix)
   ansible.builtin.set_fact:
     user_setup_root_users: "{{ user_setup_users | selectattr('name', 'equalto', 'root') | list + (user_setup_users | selectattr('uid', 'defined') | selectattr('uid', 'equalto', 0) | list) | unique }}"
-  when: user_setup_users is defined and user_setup_users | length > 0
+  when:
+    - ansible_os_family != 'Windows'
+    - user_setup_users is defined
+    - user_setup_users | length > 0
 
 - name: Assert root user cannot be removed
   ansible.builtin.assert:
     that:
-      - user.state | default('present') != 'absent'
+      - user_setup_root_users | selectattr('state', 'defined') | selectattr('state', 'equalto', 'absent') | list | length == 0
     fail_msg: >-
-      Cannot set state: absent for root user (name: {{ user.name }}).
+      Cannot set state: absent for a root user.
       Root user removal is a destructive operation and is not permitted.
-    success_msg: "Root user state validation passed."
-  loop: "{{ user_setup_root_users | default([]) }}"
-  loop_control:
-    loop_var: user
   when: user_setup_root_users is defined and user_setup_root_users | length > 0
 
 - name: Assert root user cannot have create_home false
   ansible.builtin.assert:
     that:
-      - user.create_home | default(true) != false
+      - user_setup_root_users | selectattr('create_home', 'defined') | selectattr('create_home', 'equalto', false) | list | length == 0
     fail_msg: >-
-      Cannot set create_home: false for root user (name: {{ user.name }}).
+      Cannot set create_home: false for a root user.
       Root home directory must exist. This is a destructive operation and is not permitted.
-    success_msg: "Root user create_home validation passed."
-  loop: "{{ user_setup_root_users | default([]) }}"
-  loop_control:
-    loop_var: user
   when: user_setup_root_users is defined and user_setup_root_users | length > 0
 
 - name: Assert root user cannot have uid parameter set
   ansible.builtin.assert:
     that:
-      - "'uid' not in user"
+      - user_setup_root_users | selectattr('uid', 'defined') | list | length == 0
     fail_msg: >-
-      Cannot set uid parameter for root user (name: {{ user.name }}).
+      Cannot set uid parameter for a root user.
       Remove the 'uid' parameter from the root user configuration.
-    success_msg: "Root user uid parameter validation passed."
-  loop: "{{ user_setup_root_users | default([]) }}"
-  loop_control:
-    loop_var: user
   when: user_setup_root_users is defined and user_setup_root_users | length > 0
 
 - name: Assert root user cannot have groups parameter set
   ansible.builtin.assert:
     that:
-      - "'groups' not in user"
+      - user_setup_root_users | selectattr('groups', 'defined') | list | length == 0
     fail_msg: >-
-      Cannot set groups parameter for root user (name: {{ user.name }}).
+      Cannot set groups parameter for a root user.
       Remove the 'groups' parameter from the root user configuration (including empty lists).
-    success_msg: "Root user groups parameter validation passed."
-  loop: "{{ user_setup_root_users | default([]) }}"
-  loop_control:
-    loop_var: user
   when: user_setup_root_users is defined and user_setup_root_users | length > 0
 
 - name: Assert root user cannot have groups_append parameter set
   ansible.builtin.assert:
     that:
-      - "'groups_append' not in user"
+      - user_setup_root_users | selectattr('groups_append', 'defined') | list | length == 0
     fail_msg: >-
-      Cannot set groups_append parameter for root user (name: {{ user.name }}).
+      Cannot set groups_append parameter for a root user.
       Remove the 'groups_append' parameter from the root user configuration.
-    success_msg: "Root user groups_append parameter validation passed."
-  loop: "{{ user_setup_root_users | default([]) }}"
-  loop_control:
-    loop_var: user
   when: user_setup_root_users is defined and user_setup_root_users | length > 0

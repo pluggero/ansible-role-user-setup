@@ -46,18 +46,37 @@ jobs:
     strategy:
       matrix:
         include:
-          - vagrant_box: alpinelinux323
-            vagrant_box_version: "2026.04.26"
-            vagrant_ssh_shell: "/bin/bash"
-          - vagrant_box: debian12
-            vagrant_box_version: "2026.04.26"
-            vagrant_ssh_shell: "/bin/bash"
-          - vagrant_box: archlinux
-            vagrant_box_version: "2026.04.26"
-            vagrant_ssh_shell: "/bin/bash"
-          - vagrant_box: freebsd14
-            vagrant_box_version: "2026.04.26"
-            vagrant_ssh_shell: "/bin/sh"
+          - molecule_distro: alpinelinux323
+            molecule_os_family: "unix"
+            molecule_box_version: "2026.04.26"
+            molecule_shell: "/bin/bash"
+            molecule_memory: 4096
+          - molecule_distro: debian12
+            molecule_os_family: "unix"
+            molecule_box_version: "2026.04.26"
+            molecule_shell: "/bin/bash"
+            molecule_memory: 4096
+          - molecule_distro: archlinux
+            molecule_os_family: "unix"
+            molecule_box_version: "2026.04.26"
+            molecule_shell: "/bin/bash"
+            molecule_memory: 4096
+          - molecule_distro: freebsd14
+            molecule_os_family: "unix"
+            molecule_box_version: "2026.04.26"
+            molecule_shell: "/bin/sh"
+            molecule_memory: 4096
+          # Windows: vagrant_experimental=none_communicator disables the winssh communicator
+          # of vagrant (which only checks SSH once at boot and does not wait for full system startup).
+          # vm.communicator=:none and the custom wait_for in create.yml handle
+          # SSH readiness polling instead.
+          - molecule_distro: windows11
+            molecule_os_family: "windows"
+            molecule_box_version: "2026.04.06"
+            molecule_shell: "powershell"
+            molecule_memory: 4096
+            molecule_vm_communicator: ":none"
+            vagrant_experimental: "none_communicator"
 
     env:
       VBOX_VERSION: "7.2.6"
@@ -181,9 +200,13 @@ jobs:
         env:
           PY_COLORS: "1"
           ANSIBLE_FORCE_COLOR: "1"
-          MOLECULE_DISTRO: ${{ matrix.vagrant_box }}
-          MOLECULE_VAGRANT_BOX_VERSION: ${{ matrix.vagrant_box_version }}
-          MOLECULE_SSH_SHELL: ${{ matrix.vagrant_ssh_shell }}
+          MOLECULE_DISTRO: ${{ matrix.molecule_distro }}
+          MOLECULE_BOX_VERSION: ${{ matrix.molecule_box_version }}
+          MOLECULE_SHELL: ${{ matrix.molecule_shell }}
+          MOLECULE_MEMORY: ${{ matrix.molecule_memory }}
+          MOLECULE_VM_COMMUNICATOR: ${{ matrix.molecule_vm_communicator }}
+          VAGRANT_EXPERIMENTAL: ${{ matrix.vagrant_experimental }}
+          MOLECULE_OS_FAMILY: ${{ matrix.molecule_os_family }}
 
   status-check:
     name: Status Check

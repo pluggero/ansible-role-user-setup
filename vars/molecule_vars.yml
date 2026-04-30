@@ -6,10 +6,6 @@ user_setup_password: "TempSec!Pass#"
 user_setup_password2: "TempPass2!#"
 user_setup_password3: "TempPass3!#"
 user_setup_root_password: "RootTestPass!123"
-user_setup_password_salt: "dc0b318e9e5511e1"
-user_setup_password_salt2: "af3d529f1a6622e2"
-user_setup_password_salt3: "bc4e427d2e7733f3"
-user_setup_root_password_salt: "ef5f638e3c8944d4"
 user_setup_groups:
   - name: test
     system: false
@@ -25,7 +21,8 @@ user_setup_users:
     groups:
       - test
     groups_append: true
-    password: "{{ user_setup_password | password_hash('sha512', user_setup_password_salt) }}"
+    password: "{{ user_setup_password }}"
+    password_salt: "dc0b318e9e5511e1"
     sudo_access: true
     sudo_nopasswd: true
     env_var_setup: true
@@ -61,7 +58,8 @@ user_setup_users:
     groups:
       - developers
     groups_append: true
-    password: "{{ user_setup_password2 | password_hash('sha512', user_setup_password_salt2) }}"
+    password: "{{ user_setup_password2 }}"
+    password_salt: "af3d529f1a6622e2"
     sudo_access: false
     sudo_nopasswd: false
     env_var_setup: true
@@ -86,14 +84,16 @@ user_setup_users:
     groups:
       - developers
     groups_append: true
-    password: "{{ user_setup_password3 | password_hash('sha512', user_setup_password_salt3) }}"
+    password: "{{ user_setup_password3 }}"
+    password_salt: "bc4e427d2e7733f3"
     sudo_access: true
     sudo_nopasswd: false
   - name: removeduser
     state: absent
   - name: root
     shell: "/bin/sh"
-    password: "{{ user_setup_root_password | password_hash('sha512', user_setup_root_password_salt) }}"
+    password: "{{ user_setup_root_password }}"
+    password_salt: "ef5f638e3c8944d4"
     env_var_setup: true
     env_var_file: ".env_vars"
     user_directories:

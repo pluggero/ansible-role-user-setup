@@ -6,11 +6,6 @@
   vars_files:
     - ../../vars/molecule_vars.yml
 
-  vars:
-    ansible_user: ansible
-    ansible_password: ansible
-    ansible_become_password: ansible
-
   pre_tasks:
     - name: Update apt cache
       ansible.builtin.apt:

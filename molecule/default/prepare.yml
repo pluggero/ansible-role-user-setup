@@ -5,9 +5,6 @@
 
   vars:
     role_path: "{{ playbook_dir }}/../.." # noqa: var-naming[read-only]
-    ansible_user: ansible
-    ansible_password: ansible
-    ansible_become_password: ansible
 
   tasks:
     - name: Include OS-specific variables
@@ -21,13 +18,20 @@
       loop_control:
         loop_var: var_file
 
-    - name: Create group to be removed
+    - name: Create group to be removed (Unix)
       ansible.builtin.group:
         name: removeme
         state: present
       become: true
+      when: ansible_os_family != 'Windows'
 
-    - name: Create user to be removed
+    - name: Create group to be removed (Windows)
+      ansible.windows.win_group:
+        name: removeme
+        state: present
+      when: ansible_os_family == 'Windows'
+
+    - name: Create user to be removed (Unix)
       ansible.builtin.user:
         name: removeduser
         uid: 9999
@@ -35,14 +39,14 @@
         shell: /bin/bash
         create_home: true
       become: true
+      when: ansible_os_family != 'Windows'
 
-    - name: Set OS-specific root group
-      ansible.builtin.set_fact:
-        user_setup_root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else 'root' }}"
-
-    - name: Set visudo path for OS family
-      ansible.builtin.set_fact:
-        user_setup_visudo_path: "{{ '/usr/local/sbin/visudo' if ansible_os_family == 'FreeBSD' else '/usr/sbin/visudo' }}"
+    - name: Create user to be removed (Windows)
+      ansible.windows.win_user:
+        name: removeduser
+        state: present
+        password: "TempPassword123!"
+      when: ansible_os_family == 'Windows'
 
     - name: Ensure sudoers.d directory exists
       ansible.builtin.file:
@@ -52,6 +56,7 @@
         owner: root
         group: "{{ user_setup_root_group }}"
       become: true
+      when: ansible_os_family != 'Windows'
 
     - name: Create sudoers file for user to be removed
       ansible.builtin.copy:
@@ -62,3 +67,4 @@
         group: "{{ user_setup_root_group }}"
         validate: "{{ user_setup_visudo_path}} -cf %s"
       become: true
+      when: ansible_os_family != 'Windows'

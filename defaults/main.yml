@@ -12,7 +12,8 @@ user_setup_users: []
 #   create_home: true
 #   groups: []
 #   groups_append: true
-#   password: "{{ user_setup_example_password | password_hash('sha512', user_setup_example_password_salt) }}"
+#   password: "{{ user_setup_example_password }}"
+#   password_salt: "optional_fixed_salt_for_idempotency"
 #   sudo_access: true
 #   sudo_nopasswd: false
 #   env_var_setup: true
@@ -45,4 +46,5 @@ user_setup_users: []
 # Root user example (do not set uid, groups, or groups_append):
 # - name: root
 #   shell: "/bin/bash"
-#   password: "{{ user_setup_root_password | password_hash('sha512', user_setup_root_password_salt) }}"
+#   password: "{{ user_setup_root_password }}"
+#   password_salt: "optional_fixed_salt_for_idempotency"

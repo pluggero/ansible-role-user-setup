@@ -1,10 +1,10 @@
 ---
-- name: Manage groups
-  ansible.builtin.group:
-    name: "{{ group.name }}"
-    system: "{{ group.system }}"
-    state: "{{ group.state | default('present') }}"
-  become: true
-  loop: "{{ user_setup_groups }}"
-  loop_control:
-    loop_var: group
+- name: Manage groups (Windows)
+  ansible.builtin.include_tasks:
+    file: noauto_groups_Windows.yml
+  when: ansible_os_family == 'Windows'
+
+- name: Manage groups (Unix)
+  ansible.builtin.include_tasks:
+    file: noauto_groups_Unix.yml
+  when: ansible_os_family != 'Windows'

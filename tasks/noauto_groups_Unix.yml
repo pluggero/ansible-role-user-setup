@@ -1,0 +1,10 @@
+---
+- name: Manage Unix groups
+  ansible.builtin.group:
+    name: "{{ group.name }}"
+    system: "{{ group.system }}"
+    state: "{{ group.state | default('present') }}"
+  become: true
+  loop: "{{ user_setup_groups }}"
+  loop_control:
+    loop_var: group

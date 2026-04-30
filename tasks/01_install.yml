@@ -15,10 +15,6 @@
       loop_control:
         loop_var: var_file
 
-    - name: Set OS-specific root group
-      ansible.builtin.set_fact:
-        user_setup_root_group: "{{ 'wheel' if ansible_os_family == 'FreeBSD' else 'root' }}"
-
     - name: Include OS-specific dependencies
       ansible.builtin.include_tasks: "{{ task_file }}"
       with_first_found:

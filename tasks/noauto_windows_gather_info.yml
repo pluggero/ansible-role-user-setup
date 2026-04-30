@@ -1,0 +1,56 @@
+---
+# Gather Windows user information and create getent_passwd fact
+# This module queries Windows local users and creates a getent_passwd-compatible
+# data structure for cross-platform compatibility with Unix systems.
+#
+# Handles: Users with and without initialized profiles (skips uninitialized)
+# Can be called multiple times as user state changes (e.g., after profile initialization)
+
+- name: Gather Windows user information
+  ansible.windows.win_shell: |
+    $users = @()
+    Get-LocalUser | ForEach-Object {
+      $user = $_
+      $regPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$($user.SID)"
+
+      if (-not (Test-Path $regPath)) {
+        Write-Warning "Skipping user $($user.Name) (SID: $($user.SID)) - profile not initialized. Registry path not found: $regPath"
+        return
+      }
+
+      $profilePath = (Get-ItemProperty -Path $regPath -ErrorAction Stop).ProfileImagePath
+
+      if (-not (Test-Path $profilePath)) {
+        Write-Warning "Profile directory for $($user.Name) exists in registry but not on disk: $profilePath"
+      }
+
+      $users += [PSCustomObject]@{
+        Name = $user.Name
+        SID = $user.SID.Value
+        Enabled = $user.Enabled
+        ProfilePath = $profilePath
+      }
+    }
+
+    if ($users.Count -eq 0) {
+      Write-Output "[]"
+    } else {
+      $users | ConvertTo-Json -Depth 2
+    }
+  register: user_setup_windows_users_raw
+  become: true
+  become_method: ansible.builtin.runas
+  become_user: SYSTEM
+  changed_when: false
+
+- name: Set fact for Windows user information (getent_passwd equivalent)
+  ansible.builtin.set_fact:
+    getent_passwd: "{{ user_setup_windows_users_parsed }}"
+  vars:
+    user_setup_windows_users_list: "{{ user_setup_windows_users_raw.stdout | from_json }}"
+    user_setup_windows_users_parsed: >-
+      {%- set result = {} -%}
+      {%- for user in (user_setup_windows_users_list if user_setup_windows_users_list is iterable and user_setup_windows_users_list is not string else [user_setup_windows_users_list]) -%}
+        {%- set _ = result.update({user.Name: ['x', user.SID, '0', '0', '', user.ProfilePath, '']}) -%}
+      {%- endfor -%}
+      {{ result }}
