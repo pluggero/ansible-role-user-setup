@@ -52,7 +52,7 @@
         "/^molecule/default/molecule\\.yml$/"
       ],
       "matchStrings": [
-        "molecule_distro:\\s+debian12\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\"",
+        "molecule_distro:\\s+debian12\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\"",
         "box_version:\\s+\"\\$\\{MOLECULE_BOX_VERSION:-(?<currentValue>[\\d\\.]+)\\}\""
       ],
       "datasourceTemplate": "github-tags",
@@ -65,7 +65,7 @@
         "/^.github/workflows/ci\\.yml$/"
       ],
       "matchStrings": [
-        "molecule_distro:\\s+archlinux\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+        "molecule_distro:\\s+archlinux\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "pluggero/vagrant-archlinux-ansible",
@@ -77,7 +77,7 @@
         "/^.github/workflows/ci\\.yml$/"
       ],
       "matchStrings": [
-        "molecule_distro:\\s+alpinelinux323\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+        "molecule_distro:\\s+alpinelinux323\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "pluggero/vagrant-alpinelinux323-ansible",
@@ -89,10 +89,22 @@
         "/^.github/workflows/ci\\.yml$/"
       ],
       "matchStrings": [
-        "molecule_distro:\\s+freebsd14\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+        "molecule_distro:\\s+freebsd14\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
       ],
       "datasourceTemplate": "github-tags",
       "depNameTemplate": "pluggero/vagrant-freebsd14-ansible",
+      "versioningTemplate": "loose"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^.github/workflows/ci\\.yml$/"
+      ],
+      "matchStrings": [
+        "molecule_distro:\\s+windows11\\s+molecule_os_family:[^\\n]+\\n\\s+molecule_box_version:\\s+\"(?<currentValue>[\\d\\.]+)\""
+      ],
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "pluggero/vagrant-windows11-ansible",
       "versioningTemplate": "loose"
     },
     {
