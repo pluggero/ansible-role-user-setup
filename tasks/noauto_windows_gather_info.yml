@@ -32,11 +32,7 @@
       }
     }
 
-    if ($users.Count -eq 0) {
-      Write-Output "[]"
-    } else {
-      $users | ConvertTo-Json -Depth 2
-    }
+    ConvertTo-Json -InputObject @($users) -Depth 2
   register: user_setup_windows_users_raw
   become: true
   become_method: ansible.builtin.runas
@@ -47,10 +43,12 @@
   ansible.builtin.set_fact:
     getent_passwd: "{{ user_setup_windows_users_parsed }}"
   vars:
-    user_setup_windows_users_list: "{{ user_setup_windows_users_raw.stdout | from_json }}"
+    user_setup_windows_users_list: >-
+      {%- set parsed = user_setup_windows_users_raw.stdout | from_json -%}
+      {{ [parsed] if parsed is mapping else parsed }}
     user_setup_windows_users_parsed: >-
       {%- set result = {} -%}
-      {%- for user in (user_setup_windows_users_list if user_setup_windows_users_list is iterable and user_setup_windows_users_list is not string else [user_setup_windows_users_list]) -%}
+      {%- for user in user_setup_windows_users_list -%}
         {%- set _ = result.update({user.Name: ['x', user.SID, '0', '0', '', user.ProfilePath, '']}) -%}
       {%- endfor -%}
       {{ result }}
