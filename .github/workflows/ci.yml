@@ -53,7 +53,7 @@ jobs:
             molecule_memory: 4096
           - molecule_distro: debian12
             molecule_os_family: "unix"
-            molecule_box_version: "2026.04.26"
+            molecule_box_version: "2026.05.17"
             molecule_shell: "/bin/bash"
             molecule_memory: 4096
           - molecule_distro: archlinux
