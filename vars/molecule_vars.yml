@@ -25,6 +25,7 @@ user_setup_users:
     password_salt: "dc0b318e9e5511e1"
     sudo_access: true
     sudo_nopasswd: true
+    user_cannot_change_password: true
     env_var_setup: true
     env_var_file: ".env_vars"
     user_directories:
@@ -62,6 +63,7 @@ user_setup_users:
     password_salt: "af3d529f1a6622e2"
     sudo_access: false
     sudo_nopasswd: false
+    password_never_expires: true
     env_var_setup: true
     env_var_file: ".env_vars"
     user_directories:
