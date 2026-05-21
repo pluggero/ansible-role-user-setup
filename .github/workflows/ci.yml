@@ -63,7 +63,7 @@ jobs:
             molecule_memory: 4096
           - molecule_distro: freebsd14
             molecule_os_family: "unix"
-            molecule_box_version: "2026.05.10"
+            molecule_box_version: "2026.05.17"
             molecule_shell: "/bin/sh"
             molecule_memory: 4096
           # Windows: vagrant_experimental=none_communicator disables the winssh communicator
