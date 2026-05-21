@@ -5,9 +5,9 @@
     state: "{{ user.state | default('present') }}"
     groups: "{{ user.groups | default(omit) }}"
     groups_action: "{{ 'add' if user.groups_append | default(false) else 'replace' }}"
-    account_disabled: no
-    user_cannot_change_password: no
-    password_never_expires: no
+    account_disabled: false
+    user_cannot_change_password: "{{ user.user_cannot_change_password | default(false) }}"
+    password_never_expires: "{{ user.password_never_expires | default(false) }}"
   become: true
   become_method: ansible.builtin.runas
   become_user: SYSTEM

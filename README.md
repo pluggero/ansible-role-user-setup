@@ -123,6 +123,8 @@ user_setup_users:
 - **SSH Keys**: SSH authorized_keys are managed at `C:\Users\[username]\.ssh\authorized_keys`. OpenSSH for Windows must be installed (not managed by this role).
 - **Privilege Escalation (`sudo_access`)**: Instead of sudo, users with `sudo_access: true` are added to the local `Administrators` group. The `sudo_nopasswd` parameter doesn't apply to Windows (UAC handles privilege elevation).
 - **Administrator User**: The Windows `Administrator` account is treated like the Unix `root` user and has the same protections (cannot be removed, cannot have groups modified).
+- **Password Policy (`user_cannot_change_password`)**: Controls whether the user is allowed to change their own password. Set `user_cannot_change_password: true` to prevent the user from changing their password. Defaults to `false`.
+- **Password Policy (`password_never_expires`)**: Controls whether the user's password expires according to the local or domain password policy. Set `password_never_expires: true` to make the password permanent. Defaults to `false`.
 - **XDG Directories**: XDG user directories (`.config/user-dirs.dirs`) are not used on Windows. Only the directories specified in `user_directories` are created.
 
 ## Dependencies
