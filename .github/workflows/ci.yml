@@ -58,7 +58,7 @@ jobs:
             molecule_memory: 4096
           - molecule_distro: archlinux
             molecule_os_family: "unix"
-            molecule_box_version: "2026.06.12"
+            molecule_box_version: "2026.06.14"
             molecule_shell: "/bin/bash"
             molecule_memory: 4096
           - molecule_distro: freebsd14
