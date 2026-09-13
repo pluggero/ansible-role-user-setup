@@ -37,3 +37,9 @@ provisioner:
         ansible_user: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"
         ansible_password: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"
         ansible_become_password: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary('vagrant', 'ansible') }}"
+        # sshd.exe can crash/restart under load (github.com/PowerShell/Win32-OpenSSH/issues/1096);
+        # detect + retry instead of hanging or failing outright (github.com/ansible/ansible/issues/16731)
+        ansible_ssh_retries: "{{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') | ternary(5, 0) }}"
+        ansible_ssh_common_args: >-
+          {{ (lookup('env', 'MOLECULE_OS_FAMILY') == 'windows') |
+             ternary('-o ServerAliveInterval=15 -o ServerAliveCountMax=4', '') }}
